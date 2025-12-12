@@ -6,7 +6,7 @@ import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
-const API_BASE = '/api';  // Vercel proxies to Heroku backend
+const API_BASE = 'https://azex-pestguard.herokuapp.com/api';
 
 function Login() {
   const [email, setEmail] = useState('');
