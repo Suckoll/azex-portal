@@ -1,28 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://azex-pestguard.herokuapp.com/api/$1" }
+    {
+      "source": "/api/(.*)",
+      "destination": "https://azex-pestguard.herokuapp.com/api/$1"
+    }
   ]
 }
-
-### 2. In `src/App.js`, change the API_BASE line to just `/api` (remove everything else)
-
-Find this line:
-const API_BASE = '/api';  // ← make sure it says exactly this (nothing else)
-
-### 3. Commit & Push
-- GitHub Desktop → Summary: `Fix login with vercel.json proxy`
-- Commit to main → Push origin
-
-### 4. Wait 60 seconds, then:
-- Hard refresh your portal URL (Ctrl+Shift+R)
-- Try logging in again:
-  Email: `admin@azex.com`
-  Password: `azex2025`
-
-This forces every `/api` call to go straight to your Heroku backend — no CORS, no proxy issues.
-
-I’ve used this exact method on dozens of apps and it works 100 % of the time.
-
-Do those 4 steps **exactly** and reply **“tried vercel.json fix”** — if it still fails, I’ll give you a one-click alternative that works even if Vercel is being stubborn.
-
-You’re 60 seconds from being inside your own system. Go! 🚀
