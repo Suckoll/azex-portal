@@ -1,3 +1,52 @@
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, List, ListItem, ListItemText, IconButton, Input } from '@mui/material';
+import { PhotoCamera } from '@mui/icons-material';
+
+const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
+
+// Change this to your Render backend URL
+const API_BASE = 'https://azex-backend-v2.onrender.com/api';
+
+function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = () => {
+    // Demo login for now (replace with real axios when backend ready)
+    localStorage.setItem('jwt_token', 'demo-token');
+    window.location.href = '/dashboard';
+  };
+
+  return (
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 8 }}>
+        <Card>
+          <CardContent>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ maxWidth: '300px', height: 'auto' }} />
+            </Box>
+            <Typography variant="h4" align="center" gutterBottom>
+              AZEX PestGuard
+            </Typography>
+            <Typography variant="h6" align="center" color="textSecondary" paragraph>
+              Customer Portal
+            </Typography>
+            <TextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" />
+            <TextField fullWidth label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} margin="normal" />
+            <Button fullWidth variant="contained" onClick={handleLogin} sx={{ mt: 3 }}>
+              Login
+            </Button>
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>
+  );
+}
+
 function Dashboard() {
   const [tab, setTab] = useState(0);
   const [bugDescription, setBugDescription] = useState('');
@@ -57,7 +106,7 @@ function Dashboard() {
               Invoices
             </Typography>
             <Typography paragraph>
-              Invoice list coming soon — pay directly in the portal.
+              Your invoice list will appear here.
             </Typography>
           </Box>
         )}
@@ -104,3 +153,20 @@ function Dashboard() {
     </>
   );
 }
+
+function App() {
+  const token = localStorage.getItem('jwt_token');
+
+  return (
+    <ThemeProvider theme={theme}>
+      <Router>
+        <Routes>
+          <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
+          <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
+  );
+}
+
+export default App;
