@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container } from '@mui/material';
 import axios from 'axios';
+import logo from '../public/logo.png';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
@@ -52,7 +53,9 @@ function Dashboard() {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
   };
-
+<Box sx={{ textAlign: 'center', mb: 4 }}>
+  <img src={logo} alt="AZEX Pest Solutions Logo" style={{ maxWidth: '400px', height: 'auto' }} />
+</Box>
   return (
     <>
       <AppBar position="static">
