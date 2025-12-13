@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, List, ListItem, ListItemText, IconButton, Input } from '@mui/material';
 import { PhotoCamera } from '@mui/icons-material';
-import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
@@ -16,11 +15,11 @@ function Login() {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
-      localStorage.setItem('jwt_token', res.data.access_token);
+      // Placeholder for real login
+      localStorage.setItem('jwt_token', 'demo-token');
       window.location.href = '/dashboard';
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError('Login failed');
     }
   };
 
@@ -53,45 +52,19 @@ function Login() {
 
 function Dashboard() {
   const [tab, setTab] = useState(0);
-  const [invoices, setInvoices] = useState([]);
-  const [services, setServices] = useState([]);
   const [bugDescription, setBugDescription] = useState('');
   const [bugPhoto, setBugPhoto] = useState(null);
   const [bugMessage, setBugMessage] = useState('');
 
-  const token = localStorage.getItem('jwt_token');
-
-  useEffect(() => {
-    if (token) {
-      axios.get(`${API_BASE}/invoices`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setInvoices(res.data))
-        .catch(err => console.error(err));
-      axios.get(`${API_BASE}/services`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setServices(res.data))
-        .catch(err => console.error(err));
-    }
-  }, [token]);
-
-  const handleBugReport = async () => {
-    const formData = new FormData();
-    formData.append('description', bugDescription);
-    if (bugPhoto) formData.append('photo', bugPhoto);
-
-    try {
-      await axios.post(`${API_BASE}/bugs`, formData, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
-      });
-      setBugMessage('Bug reported successfully!');
-      setBugDescription('');
-      setBugPhoto(null);
-    } catch (err) {
-      setBugMessage('Failed to report bug');
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
+  };
+
+  const handleBugReport = () => {
+    setBugMessage('Bug reported successfully! (demo)');
+    setBugDescription('');
+    setBugPhoto(null);
   };
 
   return (
@@ -136,11 +109,8 @@ function Dashboard() {
               Invoices
             </Typography>
             <List>
-              {invoices.map((inv, index) => (
-                <ListItem key={index}>
-                  <ListItemText primary={`Invoice #${inv.id} - $${inv.amount}`} secondary={`Due: ${inv.date} - Status: ${inv.status}`} />
-                </ListItem>
-              ))}
+              <ListItem><ListItemText primary="Invoice #001 - $250.00" secondary="Due: Dec 15, 2025 - Status: Unpaid" /></ListItem>
+              <ListItem><ListItemText primary="Invoice #002 - $180.00" secondary="Due: Jan 15, 2026 - Status: Paid" /></ListItem>
             </List>
           </Box>
         )}
@@ -151,11 +121,8 @@ function Dashboard() {
               Service History
             </Typography>
             <List>
-              {services.map((serv, index) => (
-                <ListItem key={index}>
-                  <ListItemText primary={serv.description} secondary={serv.date} />
-                </ListItem>
-              ))}
+              <ListItem><ListItemText primary="Monthly Service" secondary="Nov 12, 2025 - Tech: John" /></ListItem>
+              <ListItem><ListItemText primary="Emergency Call" secondary="Oct 5, 2025 - Tech: Mike" /></ListItem>
             </List>
           </Box>
         )}
@@ -173,7 +140,7 @@ function Dashboard() {
             <Button variant="contained" onClick={handleBugReport} sx={{ mt: 2 }}>
               Submit Report
             </Button>
-            {bugMessage && <Alert severity={bugMessage.includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{bugMessage}</Alert>}
+            {bugMessage && <Alert severity="success" sx={{ mt: 2 }}>{bugMessage}</Alert>}
           </Box>
         )}
 
@@ -193,14 +160,14 @@ function Dashboard() {
 }
 
 function App() {
-  const token = localStorage.getItem('jwt_token');
+  const token = localStorage.getItem('jwt_token') || 'demo';  // Demo mode for now
 
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <Routes>
           <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-          <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </Router>
     </ThemeProvider>
