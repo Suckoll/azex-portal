@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper } from '@mui/material';
 import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
-const API_BASE = 'https://azex-backend-v2.onrender.com/api';  // Your Render backend
+const API_BASE = 'https://azex-backend-v2.onrender.com/api';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -51,6 +51,8 @@ function Login() {
 }
 
 function Dashboard() {
+  const [tab, setTab] = useState(0);
+
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
@@ -61,19 +63,80 @@ function Dashboard() {
       <AppBar position="static">
         <Toolbar>
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ height: '40px', marginRight: '10px' }} />
+            <img src="/logo.png" alt="AZEX Logo" style={{ height: '40px', marginRight: '10px' }} />
             <Typography variant="h6">
-              Welcome to Your AZEX Portal
+              AZEX PestGuard Portal
             </Typography>
           </Box>
           <Button color="inherit" onClick={logout}>Logout</Button>
         </Toolbar>
       </AppBar>
+
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h5">Your system is live!</Typography>
-        <Typography paragraph>
-          Invoices, service history, bug reporting, and payments coming in the next update.
-        </Typography>
+        <Paper sx={{ mb: 4 }}>
+          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
+            <Tab label="Dashboard" />
+            <Tab label="Invoices" />
+            <Tab label="Service History" />
+            <Tab label="Bug Reporting" />
+            <Tab label="Payments" />
+          </Tabs>
+        </Paper>
+
+        {tab === 0 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Welcome to Your AZEX Portal
+            </Typography>
+            <Typography paragraph>
+              Your system is live! Use the tabs above to view invoices, service history, report bugs, and make payments.
+            </Typography>
+          </Box>
+        )}
+
+        {tab === 1 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Invoices
+            </Typography>
+            <Typography paragraph>
+              Your invoice list will appear here (coming in next update).
+            </Typography>
+          </Box>
+        )}
+
+        {tab === 2 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Service History
+            </Typography>
+            <Typography paragraph>
+              View all past services and treatments.
+            </Typography>
+          </Box>
+        )}
+
+        {tab === 3 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Bug Reporting
+            </Typography>
+            <Typography paragraph>
+              Report a new pest sighting — upload photos and get a fast response.
+            </Typography>
+          </Box>
+        )}
+
+        {tab === 4 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Payments
+            </Typography>
+            <Typography paragraph>
+              Securely pay invoices with Stripe (coming soon).
+            </Typography>
+          </Box>
+        )}
       </Container>
     </>
   );
