@@ -1,9 +1,18 @@
 function Dashboard() {
   const [tab, setTab] = useState(0);
+  const [bugDescription, setBugDescription] = useState('');
+  const [bugPhoto, setBugPhoto] = useState(null);
+  const [bugMessage, setBugMessage] = useState('');
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
+  };
+
+  const handleBugReport = () => {
+    setBugMessage('Bug reported successfully! (demo)');
+    setBugDescription('');
+    setBugPhoto(null);
   };
 
   return (
@@ -37,7 +46,7 @@ function Dashboard() {
               Welcome to Your AZEX Portal
             </Typography>
             <Typography paragraph>
-              Your system is live! Use the tabs to manage invoices, service history, report bugs, and make payments.
+              Your system is live! Use the tabs to manage everything.
             </Typography>
           </Box>
         )}
@@ -48,7 +57,7 @@ function Dashboard() {
               Invoices
             </Typography>
             <Typography paragraph>
-              Your invoice list will appear here (coming soon).
+              Invoice list coming soon — pay directly in the portal.
             </Typography>
           </Box>
         )}
@@ -69,9 +78,15 @@ function Dashboard() {
             <Typography variant="h5" gutterBottom>
               Report a Bug
             </Typography>
-            <Typography paragraph>
-              Report a new pest sighting — upload photos and get a fast response.
-            </Typography>
+            <TextField fullWidth label="Description" value={bugDescription} onChange={(e) => setBugDescription(e.target.value)} multiline rows={4} margin="normal" />
+            <Input accept="image/*" type="file" onChange={(e) => setBugPhoto(e.target.files[0])} />
+            <IconButton color="primary" component="label">
+              <PhotoCamera />
+            </IconButton>
+            <Button variant="contained" onClick={handleBugReport} sx={{ mt: 2 }}>
+              Submit Report
+            </Button>
+            {bugMessage && <Alert severity="success" sx={{ mt: 2 }}>{bugMessage}</Alert>}
           </Box>
         )}
 
@@ -81,7 +96,7 @@ function Dashboard() {
               Payments
             </Typography>
             <Typography paragraph>
-              Securely pay invoices with Stripe (coming soon).
+              Secure Stripe payments coming soon.
             </Typography>
           </Box>
         )}
