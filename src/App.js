@@ -8,7 +8,13 @@ const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
 
-const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
+const US_STATES = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+];
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -31,7 +37,7 @@ function Login() {
         <Card>
           <CardContent>
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <img src="/logo.png" alt="AZEX Logo" style={{ maxWidth: '300px', height: 'auto' }} />
+              <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ maxWidth: '300px', height: 'auto' }} />
             </Box>
             <Typography variant="h4" align="center" gutterBottom>
               AZEX PestGuard
@@ -53,7 +59,7 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(5); // Start on Customers tab
+  const [tab, setTab] = useState(5); // Start on Customers tab for testing
   const [customers, setCustomers] = useState([]);
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
@@ -151,6 +157,17 @@ function Dashboard() {
           </Tabs>
         </Paper>
 
+        {tab === 0 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Welcome to Your AZEX Portal
+            </Typography>
+            <Typography paragraph>
+              Your system is live! Use the tabs to manage everything.
+            </Typography>
+          </Box>
+        )}
+
         {tab === 5 && (
           <Box>
             <Typography variant="h5" gutterBottom>
@@ -211,21 +228,27 @@ function Dashboard() {
                   <TableCell>Email</TableCell>
                   <TableCell>Phone</TableCell>
                   <TableCell>Address</TableCell>
+                  <TableCell>Bill To Name</TableCell>
+                  <TableCell>Bill To Email</TableCell>
+                  <TableCell>Bill To Phone</TableCell>
                   <TableCell>Multi-Unit</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {customers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">No customers yet — add one above!</TableCell>
+                    <TableCell colSpan={8} align="center">No customers yet — add one above!</TableCell>
                   </TableRow>
                 ) : (
                   customers.map(c => (
                     <TableRow key={c.id}>
                       <TableCell>{c.firstName} {c.lastName}</TableCell>
                       <TableCell>{c.email}</TableCell>
-                      <TableCell>{c.phone1}</TableCell>
-                      <TableCell>{c.address}</TableCell>
+                      <TableCell>{c.phone1 || 'N/A'}</TableCell>
+                      <TableCell>{c.address || 'N/A'}</TableCell>
+                      <TableCell>{c.billName || 'N/A'}</TableCell>
+                      <TableCell>{c.billEmail || 'N/A'}</TableCell>
+                      <TableCell>{c.billPhone || 'N/A'}</TableCell>
                       <TableCell>{c.multiUnit ? 'Yes' : 'No'}</TableCell>
                     </TableRow>
                   ))
