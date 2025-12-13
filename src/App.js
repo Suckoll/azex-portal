@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container } from '@mui/material';
 import axios from 'axios';
-import logo from '../public/logo.png';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
-const API_BASE = 'https://azex-backend-v2.onrender.com/api';
+const API_BASE = 'https://azex-backend-v2.onrender.com/api';  // Your Render backend
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -29,6 +28,9 @@ function Login() {
       <Box sx={{ mt: 8 }}>
         <Card>
           <CardContent>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ maxWidth: '300px', height: 'auto' }} />
+            </Box>
             <Typography variant="h4" align="center" gutterBottom>
               AZEX PestGuard
             </Typography>
@@ -53,16 +55,17 @@ function Dashboard() {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
   };
-<Box sx={{ textAlign: 'center', mb: 4 }}>
-  <img src={logo} alt="AZEX Pest Solutions Logo" style={{ maxWidth: '400px', height: 'auto' }} />
-</Box>
+
   return (
     <>
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Welcome to Your AZEX Portal
-          </Typography>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ height: '40px', marginRight: '10px' }} />
+            <Typography variant="h6">
+              Welcome to Your AZEX Portal
+            </Typography>
+          </Box>
           <Button color="inherit" onClick={logout}>Logout</Button>
         </Toolbar>
       </AppBar>
