@@ -4,8 +4,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import axios from 'axios';
 
-const isAdmin = () => true;  // Force admin view for now
-
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
@@ -60,17 +58,10 @@ function Dashboard() {
 
   const token = localStorage.getItem('jwt_token');
 
-  const isAdmin = () => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.role === 'admin';
-    } catch {
-      return false;
-    }
-  };
+  const isAdmin = true;  // Force admin view so Customers tab shows (temporary for testing)
 
   useEffect(() => {
-    if (token && isAdmin()) {
+    if (token && isAdmin) {
       axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
         .then(res => setCustomers(res.data))
         .catch(err => console.error(err));
@@ -84,7 +75,6 @@ function Dashboard() {
       });
       setMessage('Customer added successfully!');
       setNewCustomer({ name: '', email: '', address: '', phone: '' });
-      // Refresh list
       const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
       setCustomers(res.data);
     } catch (err) {
@@ -113,14 +103,14 @@ function Dashboard() {
 
       <Container sx={{ mt: 4 }}>
         <Paper sx={{ mb: 4 }}>
-        <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
-  <Tab label="Dashboard" />
-  <Tab label="Invoices" />
-  <Tab label="Service History" />
-  <Tab label="Bug Reporting" />
-  <Tab label="Payments" />
-  <Tab label="Customers" />  <!-- Add this line -->
-</Tabs>
+          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
+            <Tab label="Dashboard" />
+            <Tab label="Invoices" />
+            <Tab label="Service History" />
+            <Tab label="Bug Reporting" />
+            <Tab label="Payments" />
+            <Tab label="Customers" />  {/* Always visible for now */}
+          </Tabs>
         </Paper>
 
         {tab === 0 && (
@@ -134,7 +124,7 @@ function Dashboard() {
           </Box>
         )}
 
-        {tab === 5 && isAdmin() && (
+        {tab === 5 && (
           <Box>
             <Typography variant="h5" gutterBottom>
               Manage Customers
@@ -180,7 +170,7 @@ function Dashboard() {
           </Box>
         )}
 
-        {/* Placeholder for other tabs */}
+        {/* Other tabs placeholder */}
         {tab === 1 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 2 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 3 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
