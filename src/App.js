@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, List, ListItem, ListItemText, ListItemAvatar, Avatar, IconButton, Input } from '@mui/material';
+import { PhotoCamera } from '@mui/icons-material';
 import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
@@ -52,6 +53,38 @@ function Login() {
 
 function Dashboard() {
   const [tab, setTab] = useState(0);
+  const [invoices, setInvoices] = useState([]);
+  const [services, setServices] = useState([]);
+  const [bugs, setBugs] = useState([]);
+  const [description, setDescription] = useState('');
+  const [photo, setPhoto] = useState(null);
+
+  const token = localStorage.getItem('jwt_token');
+
+  useEffect(() => {
+    if (token) {
+      axios.get(`${API_BASE}/invoices`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setInvoices(res.data))
+        .catch(err => console.error(err));
+      axios.get(`${API_BASE}/services`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setServices(res.data))
+        .catch(err => console.error(err));
+      axios.get(`${API_BASE}/bugs`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setBugs(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [token]);
+
+  const handleBugReport = async () => {
+    const formData = new FormData();
+    formData.append('description', description);
+    if (photo) formData.append('photo', photo);
+
+    await axios.post(`${API_BASE}/bugs`, formData, {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+    });
+    window.location.reload();
+  };
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -89,7 +122,7 @@ function Dashboard() {
               Welcome to Your AZEX Portal
             </Typography>
             <Typography paragraph>
-              Your system is live! Use the tabs above to view invoices, service history, report bugs, and make payments.
+              Your pest control management system is live and ready.
             </Typography>
           </Box>
         )}
@@ -99,9 +132,13 @@ function Dashboard() {
             <Typography variant="h5" gutterBottom>
               Invoices
             </Typography>
-            <Typography paragraph>
-              Your invoice list will appear here (coming in next update).
-            </Typography>
+            <List>
+              {invoices.map(inv => (
+                <ListItem key={inv.id}>
+                  <ListItemText primary={`$${inv.amount} - ${inv.description}`} secondary={inv.date} />
+                </ListItem>
+              ))}
+            </List>
           </Box>
         )}
 
@@ -110,20 +147,37 @@ function Dashboard() {
             <Typography variant="h5" gutterBottom>
               Service History
             </Typography>
-            <Typography paragraph>
-              View all past services and treatments.
-            </Typography>
+            <List>
+              {services.map(s => (
+                <ListItem key={s.id}>
+                  <ListItemText primary={s.description} secondary={s.date} />
+                </ListItem>
+              ))}
+            </List>
           </Box>
         )}
 
         {tab === 3 && (
           <Box>
             <Typography variant="h5" gutterBottom>
-              Bug Reporting
+              Report a Bug
             </Typography>
-            <Typography paragraph>
-              Report a new pest sighting — upload photos and get a fast response.
-            </Typography>
+            <TextField fullWidth label="Description" value={description} onChange={(e) => setDescription(e.target.value)} multiline rows={4} margin="normal" />
+            <Input type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files[0])} />
+            <Button variant="contained" onClick={handleBugReport} sx={{ mt: 2 }}>
+              Submit Report
+            </Button>
+            <Typography variant="h6" sx={{ mt: 4 }}>Previous Reports</Typography>
+            <List>
+              {bugs.map(b => (
+                <ListItem key={b.id}>
+                  <ListItemAvatar>
+                    {b.photo && <Avatar src={`${API_BASE.replace('/api', '')}/uploads/${b.photo}`} />}
+                  </ListItemAvatar>
+                  <ListItemText primary={b.description} secondary={b.date} />
+                </ListItem>
+              ))}
+            </List>
           </Box>
         )}
 
@@ -133,7 +187,7 @@ function Dashboard() {
               Payments
             </Typography>
             <Typography paragraph>
-              Securely pay invoices with Stripe (coming soon).
+              Secure Stripe payments coming soon — pay invoices directly in the portal.
             </Typography>
           </Box>
         )}
