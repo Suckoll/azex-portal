@@ -113,14 +113,14 @@ function Dashboard() {
 
       <Container sx={{ mt: 4 }}>
         <Paper sx={{ mb: 4 }}>
-          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
-            <Tab label="Dashboard" />
-            <Tab label="Invoices" />
-            <Tab label="Service History" />
-            <Tab label="Bug Reporting" />
-            <Tab label="Payments" />
-            {isAdmin() && <Tab label="Customers" />}
-          </Tabs>
+        <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
+  <Tab label="Dashboard" />
+  <Tab label="Invoices" />
+  <Tab label="Service History" />
+  <Tab label="Bug Reporting" />
+  <Tab label="Payments" />
+  <Tab label="Customers" />  <!-- Add this line -->
+</Tabs>
         </Paper>
 
         {tab === 0 && (
