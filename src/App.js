@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, FormControl, InputLabel, Select, MenuItem, List, ListItem, ListItemText } from '@mui/material';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
 import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '400px'
-};
-
-const center = {
-  lat: 33.4484, // Phoenix default
-  lng: -112.0740
-};
+const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -62,30 +53,72 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(0);
-  const [technicians, setTechnicians] = useState([]);
-  const [selectedTech, setSelectedTech] = useState('');
-  const [jobs, setJobs] = useState([]);
+  const [tab, setTab] = useState(5); // Start on Customers tab
+  const [customers, setCustomers] = useState([]);
+  const [newCustomer, setNewCustomer] = useState({
+    firstName: '',
+    lastName: '',
+    phone1: '',
+    email: '',
+    company: '',
+    address: '',
+    city: '',
+    state: 'AZ',
+    zip: '',
+    billName: '',
+    billEmail: '',
+    billPhone: '',
+    billAddress: '',
+    billCity: '',
+    billState: 'AZ',
+    billZip: '',
+    multiUnit: false
+  });
+  const [message, setMessage] = useState('');
 
   const token = localStorage.getItem('jwt_token');
 
-  const isAdmin = true; // Force admin view
+  const isAdmin = true;  // Force admin view
 
   useEffect(() => {
     if (token && isAdmin) {
-      axios.get(`${API_BASE}/technicians`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setTechnicians(res.data))
+      axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setCustomers(res.data))
         .catch(err => console.error(err));
     }
   }, [token]);
 
-  useEffect(() => {
-    if (selectedTech && token) {
-      axios.get(`${API_BASE}/jobs/${selectedTech}`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setJobs(res.data))
-        .catch(err => console.error(err));
+  const handleAddCustomer = async () => {
+    try {
+      await axios.post(`${API_BASE}/customers`, newCustomer, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Customer added successfully!');
+      setNewCustomer({
+        firstName: '',
+        lastName: '',
+        phone1: '',
+        email: '',
+        company: '',
+        address: '',
+        city: '',
+        state: 'AZ',
+        zip: '',
+        billName: '',
+        billEmail: '',
+        billPhone: '',
+        billAddress: '',
+        billCity: '',
+        billState: 'AZ',
+        billZip: '',
+        multiUnit: false
+      });
+      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+      setCustomers(res.data);
+    } catch (err) {
+      setMessage(err.response?.data?.error || 'Failed to add customer');
     }
-  }, [selectedTech, token]);
+  };
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -114,50 +147,91 @@ function Dashboard() {
             <Tab label="Service History" />
             <Tab label="Bug Reporting" />
             <Tab label="Payments" />
-            <Tab label="Calendar" />
+            <Tab label="Customers" />
           </Tabs>
         </Paper>
 
         {tab === 5 && (
           <Box>
             <Typography variant="h5" gutterBottom>
-              Technician Routes & Schedules
+              Manage Customers
             </Typography>
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Select Technician</InputLabel>
-              <Select value={selectedTech} onChange={(e) => setSelectedTech(e.target.value)}>
-                <MenuItem value=""><em>None</em></MenuItem>
-                {technicians.map(tech => (
-                  <MenuItem key={tech.id} value={tech.id}>{tech.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
 
-            {selectedTech && (
-              <>
-                <Typography variant="h6">Today's Jobs</Typography>
-                <List>
-                  {jobs.length === 0 ? (
-                    <ListItem><ListItemText primary="No jobs scheduled today" /></ListItem>
-                  ) : (
-                    jobs.map(job => (
-                      <ListItem key={job.id}>
-                        <ListItemText primary={job.address} secondary={`${job.description} - ${job.status}`} />
-                      </ListItem>
-                    ))
-                  )}
-                </List>
-
-                <Typography variant="h6" sx={{ mt: 3 }}>Route Map</Typography>
-                <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
-                  <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={10}>
-                    {jobs.map(job => (
-                      <Marker key={job.id} position={{ lat: 33.4484, lng: -112.0740 }} title={job.address} />  // Replace with real coords later
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6">Service Address</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
+                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
+                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
+                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
+                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
+                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
+                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
+                <FormControl>
+                  <InputLabel>State</InputLabel>
+                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
+                    {US_STATES.map(state => (
+                      <MenuItem key={state} value={state}>{state}</MenuItem>
                     ))}
-                  </GoogleMap>
-                </LoadScript>
-              </>
-            )}
+                  </Select>
+                </FormControl>
+                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
+                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
+              </Box>
+
+              <Typography variant="h6">Bill To (if different)</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({...newCustomer, billName: e.target.value})} />
+                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({...newCustomer, billEmail: e.target.value})} />
+                <TextField label="Bill To Phone" value={newCustomer.billPhone} onChange={(e) => setNewCustomer({...newCustomer, billPhone: e.target.value})} />
+                <TextField label="Bill To Address" value={newCustomer.billAddress} onChange={(e) => setNewCustomer({...newCustomer, billAddress: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
+                <TextField label="Bill To City" value={newCustomer.billCity} onChange={(e) => setNewCustomer({...newCustomer, billCity: e.target.value})} />
+                <FormControl>
+                  <InputLabel>Bill To State</InputLabel>
+                  <Select value={newCustomer.billState} onChange={(e) => setNewCustomer({...newCustomer, billState: e.target.value})}>
+                    {US_STATES.map(state => (
+                      <MenuItem key={state} value={state}>{state}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField label="Bill To Zip" value={newCustomer.billZip} onChange={(e) => setNewCustomer({...newCustomer, billZip: e.target.value})} />
+              </Box>
+
+              <Button variant="contained" onClick={handleAddCustomer} sx={{ mt: 2 }}>
+                Add Customer
+              </Button>
+              {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
+            </Box>
+
+            <Typography variant="h6">Current Customers</Typography>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Address</TableCell>
+                  <TableCell>Multi-Unit</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {customers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center">No customers yet — add one above!</TableCell>
+                  </TableRow>
+                ) : (
+                  customers.map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell>{c.firstName} {c.lastName}</TableCell>
+                      <TableCell>{c.email}</TableCell>
+                      <TableCell>{c.phone1}</TableCell>
+                      <TableCell>{c.address}</TableCell>
+                      <TableCell>{c.multiUnit ? 'Yes' : 'No'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </Box>
         )}
 
