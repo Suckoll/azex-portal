@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, List, ListItem, ListItemText, IconButton, Input } from '@mui/material';
-import { PhotoCamera } from '@mui/icons-material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
-// Change this to your Render backend URL
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
 
 function Login() {
@@ -14,10 +13,14 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    // Demo login for now (replace with real axios when backend ready)
-    localStorage.setItem('jwt_token', 'demo-token');
-    window.location.href = '/dashboard';
+  const handleLogin = async () => {
+    try {
+      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
+      localStorage.setItem('jwt_token', res.data.access_token);
+      window.location.href = '/dashboard';
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed');
+    }
   };
 
   return (
@@ -26,7 +29,7 @@ function Login() {
         <Card>
           <CardContent>
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ maxWidth: '300px', height: 'auto' }} />
+              <img src="/logo.png" alt="AZEX Logo" style={{ maxWidth: '300px', height: 'auto' }} />
             </Box>
             <Typography variant="h4" align="center" gutterBottom>
               AZEX PestGuard
@@ -49,19 +52,47 @@ function Login() {
 
 function Dashboard() {
   const [tab, setTab] = useState(0);
-  const [bugDescription, setBugDescription] = useState('');
-  const [bugPhoto, setBugPhoto] = useState(null);
-  const [bugMessage, setBugMessage] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [newCustomer, setNewCustomer] = useState({ name: '', email: '', address: '', phone: '' });
+  const [message, setMessage] = useState('');
+
+  const token = localStorage.getItem('jwt_token');
+
+  const isAdmin = () => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.role === 'admin';
+    } catch {
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (token && isAdmin()) {
+      axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setCustomers(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [token]);
+
+  const handleAddCustomer = async () => {
+    try {
+      await axios.post(`${API_BASE}/customers`, newCustomer, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Customer added successfully!');
+      setNewCustomer({ name: '', email: '', address: '', phone: '' });
+      // Refresh list
+      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+      setCustomers(res.data);
+    } catch (err) {
+      setMessage(err.response?.data?.error || 'Failed to add customer');
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
-  };
-
-  const handleBugReport = () => {
-    setBugMessage('Bug reported successfully! (demo)');
-    setBugDescription('');
-    setBugPhoto(null);
   };
 
   return (
@@ -86,6 +117,7 @@ function Dashboard() {
             <Tab label="Service History" />
             <Tab label="Bug Reporting" />
             <Tab label="Payments" />
+            {isAdmin() && <Tab label="Customers" />}
           </Tabs>
         </Paper>
 
@@ -100,55 +132,57 @@ function Dashboard() {
           </Box>
         )}
 
-        {tab === 1 && (
+        {tab === 5 && isAdmin() && (
           <Box>
             <Typography variant="h5" gutterBottom>
-              Invoices
+              Manage Customers
             </Typography>
-            <Typography paragraph>
-              Your invoice list will appear here.
-            </Typography>
+            <Box sx={{ mb: 4 }}>
+              <TextField label="Name" value={newCustomer.name} onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})} fullWidth margin="normal" />
+              <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} fullWidth margin="normal" />
+              <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth margin="normal" />
+              <TextField label="Phone" value={newCustomer.phone} onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})} fullWidth margin="normal" />
+              <Button variant="contained" onClick={handleAddCustomer} sx={{ mt: 2 }}>
+                Add Customer
+              </Button>
+              {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
+            </Box>
+
+            <Typography variant="h6">Current Customers</Typography>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Address</TableCell>
+                  <TableCell>Phone</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {customers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No customers yet — add one above!</TableCell>
+                  </TableRow>
+                ) : (
+                  customers.map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell>{c.name || 'N/A'}</TableCell>
+                      <TableCell>{c.email}</TableCell>
+                      <TableCell>{c.address || 'N/A'}</TableCell>
+                      <TableCell>{c.phone || 'N/A'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </Box>
         )}
 
-        {tab === 2 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Service History
-            </Typography>
-            <Typography paragraph>
-              View all past services and treatments.
-            </Typography>
-          </Box>
-        )}
-
-        {tab === 3 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Report a Bug
-            </Typography>
-            <TextField fullWidth label="Description" value={bugDescription} onChange={(e) => setBugDescription(e.target.value)} multiline rows={4} margin="normal" />
-            <Input accept="image/*" type="file" onChange={(e) => setBugPhoto(e.target.files[0])} />
-            <IconButton color="primary" component="label">
-              <PhotoCamera />
-            </IconButton>
-            <Button variant="contained" onClick={handleBugReport} sx={{ mt: 2 }}>
-              Submit Report
-            </Button>
-            {bugMessage && <Alert severity="success" sx={{ mt: 2 }}>{bugMessage}</Alert>}
-          </Box>
-        )}
-
-        {tab === 4 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Payments
-            </Typography>
-            <Typography paragraph>
-              Secure Stripe payments coming soon.
-            </Typography>
-          </Box>
-        )}
+        {/* Placeholder for other tabs */}
+        {tab === 1 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 2 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 3 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 4 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
   );
