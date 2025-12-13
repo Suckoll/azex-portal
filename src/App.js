@@ -4,6 +4,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import axios from 'axios';
 
+const isAdmin = () => true;  // Force admin view for now
+
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
