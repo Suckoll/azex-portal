@@ -59,76 +59,20 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(5); // Start on Customers tab
-  const [customers, setCustomers] = useState([]);
-  const [newCustomer, setNewCustomer] = useState({
-    firstName: '',
-    lastName: '',
-    phone1: '',
-    email: '',
-    company: '',
-    address: '',
-    city: '',
-    state: 'AZ',
-    zip: '',
-    billName: '',
-    billEmail: '',
-    billPhone: '',
-    billAddress: '',
-    billCity: '',
-    billState: 'AZ',
-    billZip: '',
-    multiUnit: false
-  });
-  const [message, setMessage] = useState('');
-
-  const token = localStorage.getItem('jwt_token');
-
-  const isAdmin = true;  // Force admin view
-
-  useEffect(() => {
-    if (token && isAdmin) {
-      axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setCustomers(res.data))
-        .catch(err => console.error(err));
-    }
-  }, [token]);
-
-  const handleAddCustomer = async () => {
-    try {
-      await axios.post(`${API_BASE}/customers`, newCustomer, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessage('Customer added successfully!');
-      setNewCustomer({
-        firstName: '',
-        lastName: '',
-        phone1: '',
-        email: '',
-        company: '',
-        address: '',
-        city: '',
-        state: 'AZ',
-        zip: '',
-        billName: '',
-        billEmail: '',
-        billPhone: '',
-        billAddress: '',
-        billCity: '',
-        billState: 'AZ',
-        billZip: '',
-        multiUnit: false
-      });
-      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-      setCustomers(res.data);
-    } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to add customer');
-    }
-  };
+  const [tab, setTab] = useState(0);
+  const [bugDescription, setBugDescription] = useState('');
+  const [bugPhoto, setBugPhoto] = useState(null);
+  const [bugMessage, setBugMessage] = useState('');
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
+  };
+
+  const handleBugReport = () => {
+    setBugMessage('Bug reported successfully! (demo)');
+    setBugDescription('');
+    setBugPhoto(null);
   };
 
   return (
@@ -153,7 +97,6 @@ function Dashboard() {
             <Tab label="Service History" />
             <Tab label="Bug Reporting" />
             <Tab label="Payments" />
-            <Tab label="Customers" />
           </Tabs>
         </Paper>
 
@@ -168,15 +111,65 @@ function Dashboard() {
           </Box>
         )}
 
-        {tab === 5 && (
+        {tab === 1 && (
           <Box>
             <Typography variant="h5" gutterBottom>
-              Manage Customers
+              Invoices
             </Typography>
+            <Typography paragraph>
+              Invoice #001 - $250.00 - Due Dec 15, 2025 - Status: Unpaid
+            </Typography>
+            <Typography paragraph>
+              Invoice #002 - $180.00 - Due Jan 15, 2026 - Status: Paid
+            </Typography>
+          </Box>
+        )}
 
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6">Service Address</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+        {tab === 2 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Service History
+            </Typography>
+            <Typography paragraph>
+              Monthly Service - Nov 12, 2025 - Tech: John
+            </Typography>
+            <Typography paragraph>
+              Emergency Call - Oct 5, 2025 - Tech: Mike
+            </Typography>
+          </Box>
+        )}
+
+        {tab === 3 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Report a Bug
+            </Typography>
+            <TextField fullWidth label="Description" value={bugDescription} onChange={(e) => setBugDescription(e.target.value)} multiline rows={4} margin="normal" />
+            <Input accept="image/*" type="file" onChange={(e) => setBugPhoto(e.target.files[0])} />
+            <IconButton color="primary" component="label">
+              <PhotoCamera />
+            </IconButton>
+            <Button variant="contained" onClick={handleBugReport} sx={{ mt: 2 }}>
+              Submit Report
+            </Button>
+            {bugMessage && <Alert severity="success" sx={{ mt: 2 }}>{bugMessage}</Alert>}
+          </Box>
+        )}
+
+        {tab === 4 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Payments
+            </Typography>
+            <Typography paragraph>
+              Secure Stripe payments coming soon.
+            </Typography>
+          </Box>
+        )}
+      </Container>
+    </>
+  );
+}              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
                 <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
                 <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
                 <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
