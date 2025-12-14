@@ -1,59 +1,14 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Container, Tabs, Tab, Paper, TextField, Button as MuiButton, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
-
-const API_BASE = 'https://azex-backend-v2.onrender.com/api';
-
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleLogin = async () => {
-    try {
-      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
-      localStorage.setItem('jwt_token', res.data.access_token);
-      window.location.href = '/dashboard';
-    } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
-    }
-  };
-
-  return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 8 }}>
-        <Card>
-          <CardContent>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ maxWidth: '300px', height: 'auto' }} />
-            </Box>
-            <Typography variant="h4" align="center" gutterBottom>
-              AZEX PestGuard
-            </Typography>
-            <Typography variant="h6" align="center" color="textSecondary" paragraph>
-              Customer Portal
-            </Typography>
-            <TextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" />
-            <TextField fullWidth label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} margin="normal" />
-            <Button fullWidth variant="contained" onClick={handleLogin} sx={{ mt: 3 }}>
-              Login
-            </Button>
-            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-          </CardContent>
-        </Card>
-      </Box>
-    </Container>
-  );
-}
 
 function Dashboard() {
   const [tab, setTab] = useState(0);
 
   const logout = () => {
-    localStorage.removeItem('jwt_token');
     window.location.href = '/';
   };
 
@@ -94,74 +49,33 @@ function Dashboard() {
           </Box>
         )}
 
-        {tab === 1 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Invoices
-            </Typography>
-            <Typography paragraph>
-              Invoice list coming soon.
-            </Typography>
-          </Box>
-        )}
-
-        {tab === 2 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Service History
-            </Typography>
-            <Typography paragraph>
-              View all past services and treatments.
-            </Typography>
-          </Box>
-        )}
-
-        {tab === 3 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Bug Reporting
-            </Typography>
-            <Typography paragraph>
-              Report a new pest sighting — upload photos and get a fast response.
-            </Typography>
-          </Box>
-        )}
-
-        {tab === 4 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Payments
-            </Typography>
-            <Typography paragraph>
-              Secure Stripe payments coming soon.
-            </Typography>
-          </Box>
-        )}
-
         {tab === 5 && (
           <Box>
             <Typography variant="h5" gutterBottom>
               Manage Customers
             </Typography>
             <Typography paragraph>
-              Customer management coming soon.
+              Customer management features coming soon — add, edit, view details.
             </Typography>
           </Box>
         )}
+
+        {/* Placeholder for other tabs */}
+        {tab === 1 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 2 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 3 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 4 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
   );
 }
 
 function App() {
-  const token = localStorage.getItem('jwt_token');
-
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <Routes>
-          <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-          <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
+          <Route path="*" element={<Dashboard />} />
         </Routes>
       </Router>
     </ThemeProvider>
