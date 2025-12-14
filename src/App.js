@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, List, ListItem, ListItemText, IconButton, Input } from '@mui/material';
+import { PhotoCamera } from '@mui/icons-material';
 import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
-
-const US_STATES = [
-  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-];
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -37,7 +30,7 @@ function Login() {
         <Card>
           <CardContent>
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <img src="/logo.png" alt="AZEX Pest Solutions Logo" style={{ maxWidth: '300px', height: 'auto' }} />
+              <img src="/logo.png" alt="AZEX Logo" style={{ maxWidth: '300px', height: 'auto' }} />
             </Box>
             <Typography variant="h4" align="center" gutterBottom>
               AZEX PestGuard
@@ -60,19 +53,47 @@ function Login() {
 
 function Dashboard() {
   const [tab, setTab] = useState(0);
-  const [bugDescription, setBugDescription] = useState('');
-  const [bugPhoto, setBugPhoto] = useState(null);
-  const [bugMessage, setBugMessage] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [services, setServices] = useState([]);
+  const [bugs, setBugs] = useState([]);
+  const [newCustomer, setNewCustomer] = useState({ firstName: '', lastName: '', phone: '', email: '', address: '' });
+  const [message, setMessage] = useState('');
+
+  const token = localStorage.getItem('jwt_token');
+
+  const isAdmin = true; // Force admin view
+
+  useEffect(() => {
+    if (token) {
+      if (isAdmin) {
+        axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(res => setCustomers(res.data));
+        axios.get(`${API_BASE}/invoices`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(res => setInvoices(res.data));
+      }
+      axios.get(`${API_BASE}/services`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setServices(res.data));
+      axios.get(`${API_BASE}/bugs`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setBugs(res.data));
+    }
+  }, [token]);
+
+  const handleAddCustomer = async () => {
+    try {
+      await axios.post(`${API_BASE}/customers`, newCustomer, { headers: { Authorization: `Bearer ${token}` } });
+      setMessage('Customer added!');
+      setNewCustomer({ firstName: '', lastName: '', phone: '', email: '', address: '' });
+      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+      setCustomers(res.data);
+    } catch (err) {
+      setMessage('Failed to add customer');
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
-  };
-
-  const handleBugReport = () => {
-    setBugMessage('Bug reported successfully! (demo)');
-    setBugDescription('');
-    setBugPhoto(null);
   };
 
   return (
@@ -97,6 +118,7 @@ function Dashboard() {
             <Tab label="Service History" />
             <Tab label="Bug Reporting" />
             <Tab label="Payments" />
+            {isAdmin && <Tab label="Customers" />}
           </Tabs>
         </Paper>
 
@@ -116,12 +138,13 @@ function Dashboard() {
             <Typography variant="h5" gutterBottom>
               Invoices
             </Typography>
-            <Typography paragraph>
-              Invoice #001 - $250.00 - Due Dec 15, 2025 - Status: Unpaid
-            </Typography>
-            <Typography paragraph>
-              Invoice #002 - $180.00 - Due Jan 15, 2026 - Status: Paid
-            </Typography>
+            <List>
+              {invoices.map(inv => (
+                <ListItem key={inv.id}>
+                  <ListItemText primary={`$${inv.amount} - ${inv.description}`} secondary={`Status: ${inv.status}`} />
+                </ListItem>
+              ))}
+            </List>
           </Box>
         )}
 
@@ -130,29 +153,28 @@ function Dashboard() {
             <Typography variant="h5" gutterBottom>
               Service History
             </Typography>
-            <Typography paragraph>
-              Monthly Service - Nov 12, 2025 - Tech: John
-            </Typography>
-            <Typography paragraph>
-              Emergency Call - Oct 5, 2025 - Tech: Mike
-            </Typography>
+            <List>
+              {services.map(s => (
+                <ListItem key={s.id}>
+                  <ListItemText primary={s.description} secondary={s.date} />
+                </ListItem>
+              ))}
+            </List>
           </Box>
         )}
 
         {tab === 3 && (
           <Box>
             <Typography variant="h5" gutterBottom>
-              Report a Bug
+              Bug Reporting
             </Typography>
-            <TextField fullWidth label="Description" value={bugDescription} onChange={(e) => setBugDescription(e.target.value)} multiline rows={4} margin="normal" />
-            <Input accept="image/*" type="file" onChange={(e) => setBugPhoto(e.target.files[0])} />
-            <IconButton color="primary" component="label">
-              <PhotoCamera />
-            </IconButton>
-            <Button variant="contained" onClick={handleBugReport} sx={{ mt: 2 }}>
-              Submit Report
-            </Button>
-            {bugMessage && <Alert severity="success" sx={{ mt: 2 }}>{bugMessage}</Alert>}
+            <List>
+              {bugs.map(b => (
+                <ListItem key={b.id}>
+                  <ListItemText primary={b.unit + ' - ' + b.pest} secondary={b.description} />
+                </ListItem>
+              ))}
+            </List>
           </Box>
         )}
 
@@ -162,51 +184,22 @@ function Dashboard() {
               Payments
             </Typography>
             <Typography paragraph>
-              Secure Stripe payments coming soon.
+              Stripe payments coming soon.
             </Typography>
           </Box>
         )}
-      </Container>
-    </>
-  );
-}              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
-                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
-                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
-                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
-                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
-                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
-                <FormControl>
-                  <InputLabel>State</InputLabel>
-                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
-                    {US_STATES.map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
-                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
-              </Box>
 
-              <Typography variant="h6">Bill To (if different)</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({...newCustomer, billName: e.target.value})} />
-                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({...newCustomer, billEmail: e.target.value})} />
-                <TextField label="Bill To Phone" value={newCustomer.billPhone} onChange={(e) => setNewCustomer({...newCustomer, billPhone: e.target.value})} />
-                <TextField label="Bill To Address" value={newCustomer.billAddress} onChange={(e) => setNewCustomer({...newCustomer, billAddress: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="Bill To City" value={newCustomer.billCity} onChange={(e) => setNewCustomer({...newCustomer, billCity: e.target.value})} />
-                <FormControl>
-                  <InputLabel>Bill To State</InputLabel>
-                  <Select value={newCustomer.billState} onChange={(e) => setNewCustomer({...newCustomer, billState: e.target.value})}>
-                    {US_STATES.map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField label="Bill To Zip" value={newCustomer.billZip} onChange={(e) => setNewCustomer({...newCustomer, billZip: e.target.value})} />
-              </Box>
-
+        {tab === 5 && isAdmin && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Manage Customers
+            </Typography>
+            <Box sx={{ mb: 4 }}>
+              <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} fullWidth margin="normal" />
+              <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} fullWidth margin="normal" />
+              <TextField label="Phone" value={newCustomer.phone} onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})} fullWidth margin="normal" />
+              <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} fullWidth margin="normal" />
+              <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth margin="normal" />
               <Button variant="contained" onClick={handleAddCustomer} sx={{ mt: 2 }}>
                 Add Customer
               </Button>
@@ -221,42 +214,21 @@ function Dashboard() {
                   <TableCell>Email</TableCell>
                   <TableCell>Phone</TableCell>
                   <TableCell>Address</TableCell>
-                  <TableCell>Billing Name</TableCell>
-                  <TableCell>Billing Email</TableCell>
-                  <TableCell>Billing Phone</TableCell>
-                  <TableCell>Multi-Unit</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {customers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">No customers yet — add one above!</TableCell>
+                {customers.map(c => (
+                  <TableRow key={c.id}>
+                    <TableCell>{c.firstName} {c.lastName}</TableCell>
+                    <TableCell>{c.email}</TableCell>
+                    <TableCell>{c.phone}</TableCell>
+                    <TableCell>{c.address}</TableCell>
                   </TableRow>
-                ) : (
-                  customers.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell>{c.firstName} {c.lastName}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>{c.phone1 || 'N/A'}</TableCell>
-                      <TableCell>{c.address || 'N/A'}</TableCell>
-                      <TableCell>{c.billName || 'N/A'}</TableCell>
-                      <TableCell>{c.billEmail || 'N/A'}</TableCell>
-                      <TableCell>{c.billPhone || 'N/A'}</TableCell>
-                      <TableCell>{c.multiUnit ? 'Yes' : 'No'}</TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </Box>
         )}
-
-        {/* Other tabs placeholder */}
-        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
-        {tab === 1 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 2 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 3 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 4 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
   );
