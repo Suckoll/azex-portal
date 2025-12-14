@@ -59,7 +59,7 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(5); // Start on Customers tab for testing
+  const [tab, setTab] = useState(5); // Start on Customers tab
   const [customers, setCustomers] = useState([]);
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
@@ -228,43 +228,32 @@ function Dashboard() {
                   <TableCell>Email</TableCell>
                   <TableCell>Phone</TableCell>
                   <TableCell>Address</TableCell>
-                  <TableCell>Bill To Name</TableCell>
-                  <TableCell>Bill To Email</TableCell>
-                  <TableCell>Bill To Phone</TableCell>
+                  <TableCell>Billing Name</TableCell>
+                  <TableCell>Billing Email</TableCell>
+                  <TableCell>Billing Phone</TableCell>
                   <TableCell>Multi-Unit</TableCell>
                 </TableRow>
-      <TableHead>
-  <TableRow>
-    <TableCell>Name</TableCell>
-    <TableCell>Email</TableCell>
-    <TableCell>Phone</TableCell>
-    <TableCell>Address</TableCell>
-    <TableCell>Billing Name</TableCell>
-    <TableCell>Billing Email</TableCell>
-    <TableCell>Billing Phone</TableCell>
-    <TableCell>Multi-Unit</TableCell>
-  </TableRow>
-</TableHead>
-<TableBody>
-  {customers.length === 0 ? (
-    <TableRow>
-      <TableCell colSpan={8} align="center">No customers yet — add one above!</TableCell>
-    </TableRow>
-  ) : (
-    customers.map(c => (
-      <TableRow key={c.id}>
-        <TableCell>{c.firstName} {c.lastName}</TableCell>
-        <TableCell>{c.email}</TableCell>
-        <TableCell>{c.phone1 || 'N/A'}</TableCell>
-        <TableCell>{c.address || 'N/A'}</TableCell>
-        <TableCell>{c.billName || 'N/A'}</TableCell>
-        <TableCell>{c.billEmail || 'N/A'}</TableCell>
-        <TableCell>{c.billPhone || 'N/A'}</TableCell>
-        <TableCell>{c.multiUnit ? 'Yes' : 'No'}</TableCell>
-      </TableRow>
-    ))
-  )}
-</TableBody>
+              </TableHead>
+              <TableBody>
+                {customers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">No customers yet — add one above!</TableCell>
+                  </TableRow>
+                ) : (
+                  customers.map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell>{c.firstName} {c.lastName}</TableCell>
+                      <TableCell>{c.email}</TableCell>
+                      <TableCell>{c.phone1 || 'N/A'}</TableCell>
+                      <TableCell>{c.address || 'N/A'}</TableCell>
+                      <TableCell>{c.billName || 'N/A'}</TableCell>
+                      <TableCell>{c.billEmail || 'N/A'}</TableCell>
+                      <TableCell>{c.billPhone || 'N/A'}</TableCell>
+                      <TableCell>{c.multiUnit ? 'Yes' : 'No'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
             </Table>
           </Box>
         )}
