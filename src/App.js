@@ -298,30 +298,3 @@ function Dashboard() {
         )}
 
         {/* Other tabs placeholder */}
-        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
-        {tab === 1 && <Box><Typography variant="h5">Calendar</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
-      </Container>
-    </>
-  );
-}
-
-function App() {
-  const token = localStorage.getItem('jwt_token');
-
-  return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-          <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
-  );
-}
-
-export default App;
