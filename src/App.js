@@ -85,43 +85,26 @@ function Dashboard() {
   }, [token]);
 
   const handleAddCustomer = async () => {
-    try {
-      const token = localStorage.getItem('jwt_token');
-      if (!token) {
-        setMessage('No login token — please log in again');
-        return;
-      }
-      await axios.post(`${API_BASE}/customers`, newCustomer, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessage('Customer added successfully!');
-      setNewCustomer({
-        firstName: '',
-        lastName: '',
-        phone1: '',
-        email: '',
-        company: '',
-        address: '',
-        city: '',
-        state: 'AZ',
-        zip: '',
-        billName: '',
-        billEmail: '',
-        billPhone: '',
-        billAddress: '',
-        billCity: '',
-        billState: 'AZ',
-        billZip: '',
-        multiUnit: false
-      });
-      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-      setCustomers(res.data);
-    } catch (err) {
-      console.error('Add customer error:', err);
-      const serverMsg = err.response?.data?.error || err.response?.data?.msg || err.message;
-      setMessage(serverMsg || 'Failed to add customer');
+  try {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+      setMessage('No token — log in again');
+      return;
     }
-  };
+    await axios.post(`${API_BASE}/customers`, newCustomer, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setMessage('Customer added successfully!');
+    // Clear form and refresh list
+    setNewCustomer({ firstName: '', lastName: '', phone1: '', email: '', company: '', address: '', city: '', state: 'AZ', zip: '', billName: '', billEmail: '', billPhone: '', billAddress: '', billCity: '', billState: 'AZ', billZip: '', multiUnit: false });
+    const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+    setCustomers(res.data);
+  } catch (err) {
+    console.error('Add customer error:', err);
+    const serverMsg = err.response?.data?.error || err.response?.data?.msg || err.message;
+    setMessage(serverMsg || 'Failed to add customer');
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
