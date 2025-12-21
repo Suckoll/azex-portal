@@ -93,40 +93,20 @@ function Dashboard() {
   }, [token]);
 
   const handleAddCustomer = async () => {
-    try {
-      await axios.post(`${API_BASE}/customers`, newCustomer, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessage('Customer added successfully!');
-      setNewCustomer({
-        firstName: '',
-        lastName: '',
-        phone1: '',
-        email: '',
-        company: '',
-        address: '',
-        city: '',
-        state: 'AZ',
-        zip: '',
-        billName: '',
-        billEmail: '',
-        billPhone: '',
-        billAddress: '',
-        billCity: '',
-        billState: 'AZ',
-        billZip: '',
-        multiUnit: false,
-        sms: true,
-        emailPref: true,
-        voice: false,
-        flags: ''
-      });
-      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-      setCustomers(res.data);
-    } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to add customer');
-    }
-  };
+  try {
+    const token = localStorage.getItem('jwt_token');
+    await axios.post(`${API_BASE}/customers`, newCustomer, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setMessage('Customer added successfully!');
+    setNewCustomer({ name: '', email: '', address: '', phone: '' });
+    // Refresh list
+    const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+    setCustomers(res.data);
+  } catch (err) {
+    setMessage(err.response?.data?.error || 'Failed to add customer');
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
