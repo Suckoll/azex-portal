@@ -192,43 +192,4 @@ function Dashboard() {
 
         {tab === 0 && (
           <Box>
-            <Typography variant="h5" gutterBottom>
-              Welcome to Your AZEX Portal
-            </Typography>
-            <Typography paragraph>
-              Selected branch: {branches.find(b => b.id === selectedBranch)?.name || 'All Branches'}
-            </Typography>
-          </Box>
-        )}
-
-        {tab === 1 && (
-          <Box sx={{ height: '600px' }}>
-            <Calendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: '100%' }}
-            />
-          </Box>
-        )}
-
-        {tab === 6 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Manage Customers
-            </Typography>
-
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6">Basic Information</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
-                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
-                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
-                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
-                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
-                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
-                <FormControl>
-                  <InputLabel>State</InputLabel>
-                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...new
+            <Typography variant="h5
