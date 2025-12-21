@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper } from '@mui/material';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import axios from 'axios';
 
 const localizer = momentLocalizer(moment);
 
@@ -57,31 +56,24 @@ function Login() {
 
 function Dashboard() {
   const [tab, setTab] = useState(0);
-  const [events, setEvents] = useState([]);
-
-  const token = localStorage.getItem('jwt_token');
-
-  useEffect(() => {
-    if (token) {
-      axios.get(`${API_BASE}/jobs`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => {
-          const formatted = res.data.map(job => ({
-            id: job.id,
-            title: job.title,
-            start: new Date(job.start),
-            end: new Date(job.end),
-            description: job.description
-          }));
-          setEvents(formatted);
-        })
-        .catch(err => console.error(err));
-    }
-  }, [token]);
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
   };
+
+  const events = [
+    {
+      title: 'Monthly Service - Sunset Apartments',
+      start: new Date(2025, 11, 22, 9, 0),
+      end: new Date(2025, 11, 22, 12, 0),
+    },
+    {
+      title: 'Emergency Call - Rob Suckoll',
+      start: new Date(2025, 11, 23, 14, 0),
+      end: new Date(2025, 11, 23, 16, 0),
+    },
+  ];
 
   return (
     <>
@@ -128,12 +120,17 @@ function Dashboard() {
               events={events}
               startAccessor="start"
               endAccessor="end"
-              style={{ height: 600 }}
+              style={{ height: '100%' }}
             />
           </Box>
         )}
 
         {/* Other tabs placeholder */}
+        {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 6 && <Box><Typography variant="h5">Customers</Typography><Typography>Customer management</Typography></Box>}
       </Container>
     </>
   );
