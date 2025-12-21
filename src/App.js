@@ -192,4 +192,22 @@ function Dashboard() {
 
         {tab === 0 && (
           <Box>
-            <Typography variant="h5
+            <Typography variant="h5" gutterBottom>
+              Welcome to Your AZEX Portal
+            </Typography>
+            <Typography paragraph>
+              Selected branch: {branches.find(b => b.id === selectedBranch)?.name || 'All Branches'}
+            </Typography>
+          </Box>
+        )}
+
+        {tab === 1 && (
+          <Box sx={{ height: '600px' }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+            />
+         
