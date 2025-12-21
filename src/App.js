@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
@@ -208,72 +208,47 @@ function Dashboard() {
                 <FormControl>
                   <InputLabel>State</InputLabel>
                   <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
-                    {US_STATES.map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
-                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
-              </Box>
-
-              <Typography variant="h6">Bill To (if different)</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({...newCustomer, billName: e.target.value})} />
-                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({...newCustomer, billEmail: e.target.value})} />
-                <TextField label="Bill To Phone" value={newCustomer.billPhone} onChange={(e) => setNewCustomer({...newCustomer, billPhone: e.target.value})} />
-                <TextField label="Bill To Address" value={newCustomer.billAddress} onChange={(e) => setNewCustomer({...newCustomer, billAddress: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="Bill To City" value={newCustomer.billCity} onChange={(e) => setNewCustomer({...newCustomer, billCity: e.target.value})} />
-                <FormControl>
-                  <InputLabel>Bill To State</InputLabel>
-                  <Select value={newCustomer.billState} onChange={(e) => setNewCustomer({...newCustomer, billState: e.target.value})}>
-                    {US_STATES.map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField label="Bill To Zip" value={newCustomer.billZip} onChange={(e) => setNewCustomer({...newCustomer, billZip: e.target.value})} />
-              </Box>
-
-              <Button variant="contained" onClick={handleAddCustomer} sx={{ mt: 2 }}>
-                Add Customer
-              </Button>
-              {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
-            </Box>
-
-            <Typography variant="h6">Current Customers</Typography>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell>Multi-Unit</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {customers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">No customers yet — add one above!</TableCell>
-                  </TableRow>
-                ) : (
-                  customers.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell>{c.firstName} {c.lastName}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>{c.phone1}</TableCell>
-                      <TableCell>{c.address}</TableCell>
-                      <TableCell>{c.multiUnit ? 'Yes' : 'No'}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Box>
-        )}
-
-        {/* Other tabs placeholder */}
-        {tab === 1 && <Box><Typography variant="h5">Calendar</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 3 && <Box><Typography variant="h
+                    <MenuItem value="AL">AL</MenuItem>
+                    <MenuItem value="AK">AK</MenuItem>
+                    <MenuItem value="AZ">AZ</MenuItem>
+                    <MenuItem value="AR">AR</MenuItem>
+                    <MenuItem value="CA">CA</MenuItem>
+                    <MenuItem value="CO">CO</MenuItem>
+                    <MenuItem value="CT">CT</MenuItem>
+                    <MenuItem value="DE">DE</MenuItem>
+                    <MenuItem value="FL">FL</MenuItem>
+                    <MenuItem value="GA">GA</MenuItem>
+                    <MenuItem value="HI">HI</MenuItem>
+                    <MenuItem value="ID">ID</MenuItem>
+                    <MenuItem value="IL">IL</MenuItem>
+                    <MenuItem value="IN">IN</MenuItem>
+                    <MenuItem value="IA">IA</MenuItem>
+                    <MenuItem value="KS">KS</MenuItem>
+                    <MenuItem value="KY">KY</MenuItem>
+                    <MenuItem value="LA">LA</MenuItem>
+                    <MenuItem value="ME">ME</MenuItem>
+                    <MenuItem value="MD">MD</MenuItem>
+                    <MenuItem value="MA">MA</MenuItem>
+                    <MenuItem value="MI">MI</MenuItem>
+                    <MenuItem value="MN">MN</MenuItem>
+                    <MenuItem value="MS">MS</MenuItem>
+                    <MenuItem value="MO">MO</MenuItem>
+                    <MenuItem value="MT">MT</MenuItem>
+                    <MenuItem value="NE">NE</MenuItem>
+                    <MenuItem value="NV">NV</MenuItem>
+                    <MenuItem value="NH">NH</MenuItem>
+                    <MenuItem value="NJ">NJ</MenuItem>
+                    <MenuItem value="NM">NM</MenuItem>
+                    <MenuItem value="NY">NY</MenuItem>
+                    <MenuItem value="NC">NC</MenuItem>
+                    <MenuItem value="ND">ND</MenuItem>
+                    <MenuItem value="OH">OH</MenuItem>
+                    <MenuItem value="OK">OK</MenuItem>
+                    <MenuItem value="OR">OR</MenuItem>
+                    <MenuItem value="PA">PA</MenuItem>
+                    <MenuItem value="RI">RI</MenuItem>
+                    <MenuItem value="SC">SC</MenuItem>
+                    <MenuItem value="SD">SD</MenuItem>
+                    <MenuItem value="TN">TN</MenuItem>
+                    <MenuItem value="TX">TX</MenuItem>
+                    <MenuItem value="UT
