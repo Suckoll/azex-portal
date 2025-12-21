@@ -1,254 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import axios from 'axios';
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_cors import CORS
+import os
 
-const localizer = momentLocalizer(moment);
+app = Flask(__name__)
 
-const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
+# Config
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///test.db').replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-dev-secret')
 
-const API_BASE = 'https://azex-backend-v2.onrender.com/api';
+db = SQLAlchemy(app)
+jwt = JWTManager(app)
+CORS(app)
 
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), default='customer')
+    firstName = db.Column(db.String(100))
+    lastName = db.Column(db.String(100))
+    phone1 = db.Column(db.String(20))
+    company = db.Column(db.String(100))
+    address = db.Column(db.String(200))
+    city = db.Column(db.String(100))
+    state = db.Column(db.String(10))
+    zip = db.Column(db.String(20))
+    billName = db.Column(db.String(100))
+    billEmail = db.Column(db.String(120))
+    billPhone = db.Column(db.String(20))
+    billAddress = db.Column(db.String(200))
+    billCity = db.Column(db.String(100))
+    billState = db.Column(db.String(10))
+    billZip = db.Column(db.String(20))
+    multiUnit = db.Column(db.Boolean, default=False)
 
-  const handleLogin = async () => {
-    try {
-      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
-      localStorage.setItem('jwt_token', res.data.access_token);
-      window.location.href = '/dashboard';
-    } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
-    }
-  };
+with app.app_context():
+    db.create_all()
+    if not User.query.filter_by(email='admin@azex.com').first():
+        admin = User(email='admin@azex.com', password='azex2025', role='admin')
+        db.session.add(admin)
+        db.session.commit()
 
-  return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 8 }}>
-        <Card>
-          <CardContent>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <img src="/logo.png" alt="AZEX Logo" style={{ maxWidth: '300px', height: 'auto' }} />
-            </Box>
-            <Typography variant="h4" align="center" gutterBottom>
-              AZEX PestGuard
-            </Typography>
-            <Typography variant="h6" align="center" color="textSecondary" paragraph>
-              Customer Portal
-            </Typography>
-            <TextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" />
-            <TextField fullWidth label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} margin="normal" />
-            <Button fullWidth variant="contained" onClick={handleLogin} sx={{ mt: 3 }}>
-              Login
-            </Button>
-            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-          </CardContent>
-        </Card>
-      </Box>
-    </Container>
-  );
-}
+@app.route('/')
+def home():
+    return "AZEX PestGuard Backend is LIVE!"
 
-function Dashboard() {
-  const [tab, setTab] = useState(0);
-  const [customers, setCustomers] = useState([]);
-  const [newCustomer, setNewCustomer] = useState({
-    firstName: '',
-    lastName: '',
-    phone1: '',
-    email: '',
-    company: '',
-    address: '',
-    city: '',
-    state: 'AZ',
-    zip: '',
-    billName: '',
-    billEmail: '',
-    billPhone: '',
-    billAddress: '',
-    billCity: '',
-    billState: 'AZ',
-    billZip: '',
-    multiUnit: false
-  });
-  const [message, setMessage] = useState('');
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    user = User.query.filter_by(email=data.get('email')).first()
+    if user and data.get('password') == 'azex2025':
+        token = create_access_token(identity=str(user.id), additional_claims={'role': user.role})
+        return jsonify({'access_token': token})
+    return jsonify({'error': 'Invalid credentials'}), 401
 
-  const token = localStorage.getItem('jwt_token');
+@app.route('/api/customers', methods=['GET'])
+@jwt_required()
+def get_customers():
+    current_user = get_jwt_identity()
+    if current_user.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+    customers = User.query.filter_by(role='customer').all()
+    return jsonify([{
+        'id': c.id,
+        'firstName': c.firstName or '',
+        'lastName': c.lastName or '',
+        'email': c.email,
+        'phone1': c.phone1 or '',
+        'company': c.company or '',
+        'address': c.address or '',
+        'city': c.city or '',
+        'state': c.state or '',
+        'zip': c.zip or '',
+        'billName': c.billName or '',
+        'billEmail': c.billEmail or '',
+        'billPhone': c.billPhone or '',
+        'billAddress': c.billAddress or '',
+        'billCity': c.billCity or '',
+        'billState': c.billState or '',
+        'billZip': c.billZip or '',
+        'multiUnit': c.multiUnit
+    } for c in customers])
 
-  useEffect(() => {
-    if (token) {
-      axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setCustomers(res.data))
-        .catch(err => console.error(err));
-    }
-  }, [token]);
+@app.route('/api/customers', methods=['POST'])
+@jwt_required()
+def add_customer():
+    current_user = get_jwt_identity()
+    if current_user.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({'error': 'Email required'}), 400
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'Email already exists'}), 400
+    new_user = User(
+        email=data['email'],
+        password='temp123',
+        role='customer',
+        firstName=data.get('firstName'),
+        lastName=data.get('lastName'),
+        phone1=data.get('phone1'),
+        company=data.get('company'),
+        address=data.get('address'),
+        city=data.get('city'),
+        state=data.get('state'),
+        zip=data.get('zip'),
+        billName=data.get('billName'),
+        billEmail=data.get('billEmail'),
+        billPhone=data.get('billPhone'),
+        billAddress=data.get('billAddress'),
+        billCity=data.get('billCity'),
+        billState=data.get('billState'),
+        billZip=data.get('billZip'),
+        multiUnit=data.get('multiUnit', False)
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({'message': 'Customer added successfully!'})
 
-  const handleAddCustomer = async () => {
-    try {
-      await axios.post(`${API_BASE}/customers`, newCustomer, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessage('Customer added successfully!');
-      setNewCustomer({
-        firstName: '',
-        lastName: '',
-        phone1: '',
-        email: '',
-        company: '',
-        address: '',
-        city: '',
-        state: 'AZ',
-        zip: '',
-        billName: '',
-        billEmail: '',
-        billPhone: '',
-        billAddress: '',
-        billCity: '',
-        billState: 'AZ',
-        billZip: '',
-        multiUnit: false
-      });
-      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-      setCustomers(res.data);
-    } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to add customer');
-    }
-  };
+@app.route('/api/test')
+def test():
+    return jsonify({'status': 'Backend working!'})
 
-  const logout = () => {
-    localStorage.removeItem('jwt_token');
-    window.location.href = '/';
-  };
-
-  const events = [
-    {
-      title: 'Monthly Service - Sunset Apartments',
-      start: new Date(2025, 11, 22, 9, 0),
-      end: new Date(2025, 11, 22, 12, 0),
-    },
-    {
-      title: 'Emergency Call - Rob Suckoll',
-      start: new Date(2025, 11, 23, 14, 0),
-      end: new Date(2025, 11, 23, 16, 0),
-    },
-  ];
-
-  return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="AZEX Logo" style={{ height: '40px', marginRight: '10px' }} />
-            <Typography variant="h6">
-              AZEX PestGuard Portal
-            </Typography>
-          </Box>
-          <Button color="inherit" onClick={logout}>Logout</Button>
-        </Toolbar>
-      </AppBar>
-
-      <Container sx={{ mt: 4 }}>
-        <Paper sx={{ mb: 4 }}>
-          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
-            <Tab label="Dashboard" />
-            <Tab label="Calendar" />
-            <Tab label="Invoices" />
-            <Tab label="Service History" />
-            <Tab label="Bug Reporting" />
-            <Tab label="Payments" />
-            <Tab label="Customers" />
-          </Tabs>
-        </Paper>
-
-        {tab === 0 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Welcome to Your AZEX Portal
-            </Typography>
-            <Typography paragraph>
-              Your system is live! Use the tabs to manage everything.
-            </Typography>
-          </Box>
-        )}
-
-        {tab === 1 && (
-          <Box sx={{ height: '600px' }}>
-            <Calendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: '100%' }}
-            />
-          </Box>
-        )}
-
-        {tab === 6 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Manage Customers
-            </Typography>
-
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6">Basic Information</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
-                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
-                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
-                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
-                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
-                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
-                <FormControl>
-                  <InputLabel>State</InputLabel>
-                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
-                    <MenuItem value="AL">AL</MenuItem>
-                    <MenuItem value="AK">AK</MenuItem>
-                    <MenuItem value="AZ">AZ</MenuItem>
-                    <MenuItem value="AR">AR</MenuItem>
-                    <MenuItem value="CA">CA</MenuItem>
-                    <MenuItem value="CO">CO</MenuItem>
-                    <MenuItem value="CT">CT</MenuItem>
-                    <MenuItem value="DE">DE</MenuItem>
-                    <MenuItem value="FL">FL</MenuItem>
-                    <MenuItem value="GA">GA</MenuItem>
-                    <MenuItem value="HI">HI</MenuItem>
-                    <MenuItem value="ID">ID</MenuItem>
-                    <MenuItem value="IL">IL</MenuItem>
-                    <MenuItem value="IN">IN</MenuItem>
-                    <MenuItem value="IA">IA</MenuItem>
-                    <MenuItem value="KS">KS</MenuItem>
-                    <MenuItem value="KY">KY</MenuItem>
-                    <MenuItem value="LA">LA</MenuItem>
-                    <MenuItem value="ME">ME</MenuItem>
-                    <MenuItem value="MD">MD</MenuItem>
-                    <MenuItem value="MA">MA</MenuItem>
-                    <MenuItem value="MI">MI</MenuItem>
-                    <MenuItem value="MN">MN</MenuItem>
-                    <MenuItem value="MS">MS</MenuItem>
-                    <MenuItem value="MO">MO</MenuItem>
-                    <MenuItem value="MT">MT</MenuItem>
-                    <MenuItem value="NE">NE</MenuItem>
-                    <MenuItem value="NV">NV</MenuItem>
-                    <MenuItem value="NH">NH</MenuItem>
-                    <MenuItem value="NJ">NJ</MenuItem>
-                    <MenuItem value="NM">NM</MenuItem>
-                    <MenuItem value="NY">NY</MenuItem>
-                    <MenuItem value="NC">NC</MenuItem>
-                    <MenuItem value="ND">ND</MenuItem>
-                    <MenuItem value="OH">OH</MenuItem>
-                    <MenuItem value="OK">OK</MenuItem>
-                    <MenuItem value="OR">OR</MenuItem>
-                    <MenuItem value="PA">PA</MenuItem>
-                    <MenuItem value="RI">RI</MenuItem>
-                    <MenuItem value="SC">SC</MenuItem>
-                    <MenuItem value="SD">SD</MenuItem>
-                    <MenuItem value="TN">TN</MenuItem>
-                    <MenuItem value="TX">TX</MenuItem>
-                    <MenuItem value="UT
+if __name__ == '__main__':
+    app.run(debug=True)
