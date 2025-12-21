@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
 import axios from 'axios';
-
-const localizer = momentLocalizer(moment);
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
@@ -56,37 +51,19 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(1); // Start on Calendar
-  const [technicians, setTechnicians] = useState([]);
-  const [selectedTech, setSelectedTech] = useState('');
-  const [events, setEvents] = useState([]);
+  const [tab, setTab] = useState(0);
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState('');
 
   const token = localStorage.getItem('jwt_token');
 
   useEffect(() => {
     if (token) {
-      axios.get(`${API_BASE}/technicians`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setTechnicians(res.data))
+      axios.get(`${API_BASE}/branches`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setBranches(res.data))
         .catch(err => console.error(err));
     }
   }, [token]);
-
-  useEffect(() => {
-    if (selectedTech && token) {
-      axios.get(`${API_BASE}/jobs/${selectedTech}`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => {
-          const formatted = res.data.map(job => ({
-            id: job.id,
-            title: job.title,
-            start: new Date(job.start),
-            end: new Date(job.end),
-            description: job.description
-          }));
-          setEvents(formatted);
-        })
-        .catch(err => console.error(err));
-    }
-  }, [selectedTech, token]);
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -103,6 +80,14 @@ function Dashboard() {
               AZEX PestGuard Portal
             </Typography>
           </Box>
+          <FormControl sx={{ minWidth: 200, mr: 2 }}>
+            <InputLabel>Branch</InputLabel>
+            <Select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
+              {branches.map(b => (
+                <MenuItem key={b.id} value={b.id}>{b.name} ({b.city}, {b.state})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Button color="inherit" onClick={logout}>Logout</Button>
         </Toolbar>
       </AppBar>
@@ -120,39 +105,17 @@ function Dashboard() {
           </Tabs>
         </Paper>
 
-        {tab === 1 && (
+        {/* Tabs content placeholder */}
+        {tab === 0 && (
           <Box>
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Select Technician</InputLabel>
-              <Select value={selectedTech} onChange={(e) => setSelectedTech(e.target.value)}>
-                <MenuItem value="">
-                  <em>All Technicians</em>
-                </MenuItem>
-                {technicians.map(tech => (
-                  <MenuItem key={tech.id} value={tech.id}>{tech.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Box sx={{ height: '600px' }}>
-              <Calendar
-                localizer={localizer}
-                events={events}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: '100%' }}
-              />
-            </Box>
+            <Typography variant="h5" gutterBottom>
+              Welcome to Your AZEX Portal
+            </Typography>
+            <Typography paragraph>
+              Selected branch: {branches.find(b => b.id === selectedBranch)?.name || 'All Branches'}
+            </Typography>
           </Box>
         )}
-
-        {/* Other tabs placeholder */}
-        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
-        {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 6 && <Box><Typography variant="h5">Customers</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
   );
