@@ -1,130 +1,235 @@
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from flask_cors import CORS
-import os
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import axios from 'axios';
 
-app = Flask(__name__)
+const localizer = momentLocalizer(moment);
 
-# Config
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///test.db').replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-dev-secret')
+const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
-db = SQLAlchemy(app)
-jwt = JWTManager(app)
-CORS(app)
+const API_BASE = 'https://azex-backend-v2.onrender.com/api';
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), default='customer')
-    firstName = db.Column(db.String(100))
-    lastName = db.Column(db.String(100))
-    phone1 = db.Column(db.String(20))
-    company = db.Column(db.String(100))
-    address = db.Column(db.String(200))
-    city = db.Column(db.String(100))
-    state = db.Column(db.String(10))
-    zip = db.Column(db.String(20))
-    billName = db.Column(db.String(100))
-    billEmail = db.Column(db.String(120))
-    billPhone = db.Column(db.String(20))
-    billAddress = db.Column(db.String(200))
-    billCity = db.Column(db.String(100))
-    billState = db.Column(db.String(10))
-    billZip = db.Column(db.String(20))
-    multiUnit = db.Column(db.Boolean, default=False)
+const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 
-with app.app_context():
-    db.create_all()
-    if not User.query.filter_by(email='admin@azex.com').first():
-        admin = User(email='admin@azex.com', password='azex2025', role='admin')
-        db.session.add(admin)
-        db.session.commit()
+function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-@app.route('/')
-def home():
-    return "AZEX PestGuard Backend is LIVE!"
+  const handleLogin = async () => {
+    try {
+      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
+      localStorage.setItem('jwt_token', res.data.access_token);
+      window.location.href = '/dashboard';
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed');
+    }
+  };
 
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    user = User.query.filter_by(email=data.get('email')).first()
-    if user and data.get('password') == 'azex2025':
-        token = create_access_token(identity=str(user.id), additional_claims={'role': user.role})
-        return jsonify({'access_token': token})
-    return jsonify({'error': 'Invalid credentials'}), 401
+  return (
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 8 }}>
+        <Card>
+          <CardContent>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <img src="/logo.png" alt="AZEX Logo" style={{ maxWidth: '300px', height: 'auto' }} />
+            </Box>
+            <Typography variant="h4" align="center" gutterBottom>
+              AZEX PestGuard
+            </Typography>
+            <Typography variant="h6" align="center" color="textSecondary" paragraph>
+              Customer Portal
+            </Typography>
+            <TextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" />
+            <TextField fullWidth label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} margin="normal" />
+            <Button fullWidth variant="contained" onClick={handleLogin} sx={{ mt: 3 }}>
+              Login
+            </Button>
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>
+  );
+}
 
-@app.route('/api/customers', methods=['GET'])
-@jwt_required()
-def get_customers():
-    current_user = get_jwt_identity()
-    if current_user.get('role') != 'admin':
-        return jsonify({'error': 'Admin only'}), 403
-    customers = User.query.filter_by(role='customer').all()
-    return jsonify([{
-        'id': c.id,
-        'firstName': c.firstName or '',
-        'lastName': c.lastName or '',
-        'email': c.email,
-        'phone1': c.phone1 or '',
-        'company': c.company or '',
-        'address': c.address or '',
-        'city': c.city or '',
-        'state': c.state or '',
-        'zip': c.zip or '',
-        'billName': c.billName or '',
-        'billEmail': c.billEmail or '',
-        'billPhone': c.billPhone or '',
-        'billAddress': c.billAddress or '',
-        'billCity': c.billCity or '',
-        'billState': c.billState or '',
-        'billZip': c.billZip or '',
-        'multiUnit': c.multiUnit
-    } for c in customers])
+function Dashboard() {
+  const [tab, setTab] = useState(0);
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [newCustomer, setNewCustomer] = useState({
+    firstName: '',
+    lastName: '',
+    phone1: '',
+    email: '',
+    company: '',
+    address: '',
+    city: '',
+    state: 'AZ',
+    zip: '',
+    billName: '',
+    billEmail: '',
+    billPhone: '',
+    billAddress: '',
+    billCity: '',
+    billState: 'AZ',
+    billZip: '',
+    multiUnit: false
+  });
+  const [message, setMessage] = useState('');
 
-@app.route('/api/customers', methods=['POST'])
-@jwt_required()
-def add_customer():
-    current_user = get_jwt_identity()
-    if current_user.get('role') != 'admin':
-        return jsonify({'error': 'Admin only'}), 403
-    data = request.get_json()
-    if not data or 'email' not in data:
-        return jsonify({'error': 'Email required'}), 400
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({'error': 'Email already exists'}), 400
-    new_user = User(
-        email=data['email'],
-        password='temp123',
-        role='customer',
-        firstName=data.get('firstName'),
-        lastName=data.get('lastName'),
-        phone1=data.get('phone1'),
-        company=data.get('company'),
-        address=data.get('address'),
-        city=data.get('city'),
-        state=data.get('state'),
-        zip=data.get('zip'),
-        billName=data.get('billName'),
-        billEmail=data.get('billEmail'),
-        billPhone=data.get('billPhone'),
-        billAddress=data.get('billAddress'),
-        billCity=data.get('billCity'),
-        billState=data.get('billState'),
-        billZip=data.get('billZip'),
-        multiUnit=data.get('multiUnit', False)
-    )
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({'message': 'Customer added successfully!'})
+  const token = localStorage.getItem('jwt_token');
 
-@app.route('/api/test')
-def test():
-    return jsonify({'status': 'Backend working!'})
+  useEffect(() => {
+    if (token) {
+      axios.get(`${API_BASE}/branches`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setBranches(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [token]);
 
-if __name__ == '__main__':
-    app.run(debug=True)
+  useEffect(() => {
+    if (token) {
+      const url = selectedBranch ? `${API_BASE}/customers?branch_id=${selectedBranch}` : `${API_BASE}/customers`;
+      axios.get(url, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setCustomers(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [token, selectedBranch]);
+
+  const handleAddCustomer = async () => {
+    try {
+      await axios.post(`${API_BASE}/customers`, newCustomer, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Customer added successfully!');
+      setNewCustomer({
+        firstName: '',
+        lastName: '',
+        phone1: '',
+        email: '',
+        company: '',
+        address: '',
+        city: '',
+        state: 'AZ',
+        zip: '',
+        billName: '',
+        billEmail: '',
+        billPhone: '',
+        billAddress: '',
+        billCity: '',
+        billState: 'AZ',
+        billZip: '',
+        multiUnit: false
+      });
+      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+      setCustomers(res.data);
+    } catch (err) {
+      setMessage(err.response?.data?.error || 'Failed to add customer');
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('jwt_token');
+    window.location.href = '/';
+  };
+
+  return (
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            <img src="/logo.png" alt="AZEX Logo" style={{ height: '40px', marginRight: '10px' }} />
+            <Typography variant="h6">
+              AZEX PestGuard Portal
+            </Typography>
+          </Box>
+          <FormControl sx={{ minWidth: 200, mr: 2 }}>
+            <InputLabel>Branch</InputLabel>
+            <Select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
+              <MenuItem value="">
+                <em>All Branches</em>
+              </MenuItem>
+              {branches.map(b => (
+                <MenuItem key={b.id} value={b.id}>{b.name} ({b.city}, {b.state})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button color="inherit" onClick={logout}>Logout</Button>
+        </Toolbar>
+      </AppBar>
+
+      <Container sx={{ mt: 4 }}>
+        <Paper sx={{ mb: 4 }}>
+          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
+            <Tab label="Dashboard" />
+            <Tab label="Calendar" />
+            <Tab label="Invoices" />
+            <Tab label="Service History" />
+            <Tab label="Bug Reporting" />
+            <Tab label="Payments" />
+            <Tab label="Customers" />
+          </Tabs>
+        </Paper>
+
+        {tab === 0 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Welcome to Your AZEX Portal
+            </Typography>
+            <Typography paragraph>
+              Selected branch: {branches.find(b => b.id === selectedBranch)?.name || 'All Branches'}
+            </Typography>
+          </Box>
+        )}
+
+        {tab === 1 && (
+          <Box sx={{ height: '600px' }}>
+            <Calendar
+              localizer={localizer}
+              events={[
+                { title: 'Monthly Service - Sunset Apartments', start: new Date(2025, 11, 22, 9, 0), end: new Date(2025, 11, 22, 12, 0) },
+                { title: 'Emergency Call - Rob Suckoll', start: new Date(2025, 11, 23, 14, 0), end: new Date(2025, 11, 23, 16, 0) },
+              ]}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+            />
+          </Box>
+        )}
+
+        {tab === 6 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Manage Customers
+            </Typography>
+
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6">Basic Information</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
+                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
+                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
+                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
+                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
+                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
+                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
+                <FormControl>
+                  <InputLabel>State</InputLabel>
+                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
+                    {US_STATES.map(state => (
+                      <MenuItem key={state} value={state}>{state}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
+                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
+              </Box>
+
+              <Typography variant="h6">Bill To (if different)</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3
