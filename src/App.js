@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper } from '@mui/material';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import axios from 'axios';
+
+const localizer = momentLocalizer(moment);
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
@@ -51,60 +56,27 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(5); // Start on Customers tab
-  const [customers, setCustomers] = useState([]);
-  const [newCustomer, setNewCustomer] = useState({
-    firstName: '',
-    lastName: '',
-    phone1: '',
-    email: '',
-    company: '',
-    address: '',
-    city: '',
-    state: 'AZ',
-    zip: '',
-    billName: '',
-    billEmail: '',
-    billPhone: '',
-    billAddress: '',
-    billCity: '',
-    billState: 'AZ',
-    billZip: '',
-    multiUnit: false
-  });
-  const [message, setMessage] = useState('');
+  const [tab, setTab] = useState(0);
+  const [events, setEvents] = useState([]);
 
   const token = localStorage.getItem('jwt_token');
 
   useEffect(() => {
     if (token) {
-      axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setCustomers(res.data))
+      axios.get(`${API_BASE}/jobs`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => {
+          const formatted = res.data.map(job => ({
+            id: job.id,
+            title: job.title,
+            start: new Date(job.start),
+            end: new Date(job.end),
+            description: job.description
+          }));
+          setEvents(formatted);
+        })
         .catch(err => console.error(err));
     }
   }, [token]);
-
-  const handleAddCustomer = async () => {
-  try {
-    const token = localStorage.getItem('jwt_token');
-    if (!token) {
-      setMessage('No token — log in again');
-      return;
-    }
-    await axios.post(`${API_BASE}/customers`, newCustomer, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setMessage('Customer added successfully!');
-    // Clear form and refresh list
-    setNewCustomer({ firstName: '', lastName: '', phone1: '', email: '', company: '', address: '', city: '', state: 'AZ', zip: '', billName: '', billEmail: '', billPhone: '', billAddress: '', billCity: '', billState: 'AZ', billZip: '', multiUnit: false });
-    const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-    setCustomers(res.data);
-  } catch (err) {
-    console.error('Add customer error:', err);
-    const serverMsg = err.response?.data?.error || err.response?.data?.msg || err.message;
-    setMessage(serverMsg || 'Failed to add customer');
-  }
-};
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -129,6 +101,7 @@ function Dashboard() {
         <Paper sx={{ mb: 4 }}>
           <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
             <Tab label="Dashboard" />
+            <Tab label="Calendar" />
             <Tab label="Invoices" />
             <Tab label="Service History" />
             <Tab label="Bug Reporting" />
@@ -148,190 +121,19 @@ function Dashboard() {
           </Box>
         )}
 
-        {tab === 5 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Manage Customers
-            </Typography>
-
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6">Basic Information</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
-                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
-                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
-                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
-                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
-                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
-                <FormControl>
-                  <InputLabel>State</InputLabel>
-                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
-                    <MenuItem value="AL">AL</MenuItem>
-                    <MenuItem value="AK">AK</MenuItem>
-                    <MenuItem value="AZ">AZ</MenuItem>
-                    <MenuItem value="AR">AR</MenuItem>
-                    <MenuItem value="CA">CA</MenuItem>
-                    <MenuItem value="CO">CO</MenuItem>
-                    <MenuItem value="CT">CT</MenuItem>
-                    <MenuItem value="DE">DE</MenuItem>
-                    <MenuItem value="FL">FL</MenuItem>
-                    <MenuItem value="GA">GA</MenuItem>
-                    <MenuItem value="HI">HI</MenuItem>
-                    <MenuItem value="ID">ID</MenuItem>
-                    <MenuItem value="IL">IL</MenuItem>
-                    <MenuItem value="IN">IN</MenuItem>
-                    <MenuItem value="IA">IA</MenuItem>
-                    <MenuItem value="KS">KS</MenuItem>
-                    <MenuItem value="KY">KY</MenuItem>
-                    <MenuItem value="LA">LA</MenuItem>
-                    <MenuItem value="ME">ME</MenuItem>
-                    <MenuItem value="MD">MD</MenuItem>
-                    <MenuItem value="MA">MA</MenuItem>
-                    <MenuItem value="MI">MI</MenuItem>
-                    <MenuItem value="MN">MN</MenuItem>
-                    <MenuItem value="MS">MS</MenuItem>
-                    <MenuItem value="MO">MO</MenuItem>
-                    <MenuItem value="MT">MT</MenuItem>
-                    <MenuItem value="NE">NE</MenuItem>
-                    <MenuItem value="NV">NV</MenuItem>
-                    <MenuItem value="NH">NH</MenuItem>
-                    <MenuItem value="NJ">NJ</MenuItem>
-                    <MenuItem value="NM">NM</MenuItem>
-                    <MenuItem value="NY">NY</MenuItem>
-                    <MenuItem value="NC">NC</MenuItem>
-                    <MenuItem value="ND">ND</MenuItem>
-                    <MenuItem value="OH">OH</MenuItem>
-                    <MenuItem value="OK">OK</MenuItem>
-                    <MenuItem value="OR">OR</MenuItem>
-                    <MenuItem value="PA">PA</MenuItem>
-                    <MenuItem value="RI">RI</MenuItem>
-                    <MenuItem value="SC">SC</MenuItem>
-                    <MenuItem value="SD">SD</MenuItem>
-                    <MenuItem value="TN">TN</MenuItem>
-                    <MenuItem value="TX">TX</MenuItem>
-                    <MenuItem value="UT">UT</MenuItem>
-                    <MenuItem value="VT">VT</MenuItem>
-                    <MenuItem value="VA">VA</MenuItem>
-                    <MenuItem value="WA">WA</MenuItem>
-                    <MenuItem value="WV">WV</MenuItem>
-                    <MenuItem value="WI">WI</MenuItem>
-                    <MenuItem value="WY">WY</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
-                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
-              </Box>
-
-              <Typography variant="h6">Bill To (if different)</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({...newCustomer, billName: e.target.value})} />
-                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({...newCustomer, billEmail: e.target.value})} />
-                <TextField label="Bill To Phone" value={newCustomer.billPhone} onChange={(e) => setNewCustomer({...newCustomer, billPhone: e.target.value})} />
-                <TextField label="Bill To Address" value={newCustomer.billAddress} onChange={(e) => setNewCustomer({...newCustomer, billAddress: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="Bill To City" value={newCustomer.billCity} onChange={(e) => setNewCustomer({...newCustomer, billCity: e.target.value})} />
-                <FormControl>
-                  <InputLabel>Bill To State</InputLabel>
-                  <Select value={newCustomer.billState} onChange={(e) => setNewCustomer({...newCustomer, billState: e.target.value})}>
-                    <MenuItem value="AL">AL</MenuItem>
-                    <MenuItem value="AK">AK</MenuItem>
-                    <MenuItem value="AZ">AZ</MenuItem>
-                    <MenuItem value="AR">AR</MenuItem>
-                    <MenuItem value="CA">CA</MenuItem>
-                    <MenuItem value="CO">CO</MenuItem>
-                    <MenuItem value="CT">CT</MenuItem>
-                    <MenuItem value="DE">DE</MenuItem>
-                    <MenuItem value="FL">FL</MenuItem>
-                    <MenuItem value="GA">GA</MenuItem>
-                    <MenuItem value="HI">HI</MenuItem>
-                    <MenuItem value="ID">ID</MenuItem>
-                    <MenuItem value="IL">IL</MenuItem>
-                    <MenuItem value="IN">IN</MenuItem>
-                    <MenuItem value="IA">IA</MenuItem>
-                    <MenuItem value="KS">KS</MenuItem>
-                    <MenuItem value="KY">KY</MenuItem>
-                    <MenuItem value="LA">LA</MenuItem>
-                    <MenuItem value="ME">ME</MenuItem>
-                    <MenuItem value="MD">MD</MenuItem>
-                    <MenuItem value="MA">MA</MenuItem>
-                    <MenuItem value="MI">MI</MenuItem>
-                    <MenuItem value="MN">MN</MenuItem>
-                    <MenuItem value="MS">MS</MenuItem>
-                    <MenuItem value="MO">MO</MenuItem>
-                    <MenuItem value="MT">MT</MenuItem>
-                    <MenuItem value="NE">NE</MenuItem>
-                    <MenuItem value="NV">NV</MenuItem>
-                    <MenuItem value="NH">NH</MenuItem>
-                    <MenuItem value="NJ">NJ</MenuItem>
-                    <MenuItem value="NM">NM</MenuItem>
-                    <MenuItem value="NY">NY</MenuItem>
-                    <MenuItem value="NC">NC</MenuItem>
-                    <MenuItem value="ND">ND</MenuItem>
-                    <MenuItem value="OH">OH</MenuItem>
-                    <MenuItem value="OK">OK</MenuItem>
-                    <MenuItem value="OR">OR</MenuItem>
-                    <MenuItem value="PA">PA</MenuItem>
-                    <MenuItem value="RI">RI</MenuItem>
-                    <MenuItem value="SC">SC</MenuItem>
-                    <MenuItem value="SD">SD</MenuItem>
-                    <MenuItem value="TN">TN</MenuItem>
-                    <MenuItem value="TX">TX</MenuItem>
-                    <MenuItem value="UT">UT</MenuItem>
-                    <MenuItem value="VT">VT</MenuItem>
-                    <MenuItem value="VA">VA</MenuItem>
-                    <MenuItem value="WA">WA</MenuItem>
-                    <MenuItem value="WV">WV</MenuItem>
-                    <MenuItem value="WI">WI</MenuItem>
-                    <MenuItem value="WY">WY</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField label="Bill To Zip" value={newCustomer.billZip} onChange={(e) => setNewCustomer({...newCustomer, billZip: e.target.value})} />
-              </Box>
-
-              <Button variant="contained" onClick={handleAddCustomer} sx={{ mt: 2 }}>
-                Add Customer
-              </Button>
-              {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
-            </Box>
-
-            <Typography variant="h6">Current Customers</Typography>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell>Multi-Unit</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {customers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">No customers yet — add one above!</TableCell>
-                  </TableRow>
-                ) : (
-                  customers.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell>{c.firstName} {c.lastName}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>{c.phone1}</TableCell>
-                      <TableCell>{c.address}</TableCell>
-                      <TableCell>{c.multiUnit ? 'Yes' : 'No'}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+        {tab === 1 && (
+          <Box sx={{ height: '600px' }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: 600 }}
+            />
           </Box>
         )}
 
         {/* Other tabs placeholder */}
-        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
-        {tab === 1 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 2 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 3 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 4 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
   );
