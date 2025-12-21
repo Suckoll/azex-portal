@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
 import axios from 'axios';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
@@ -51,7 +51,7 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(5); // Start on Customers tab
   const [customers, setCustomers] = useState([]);
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
@@ -85,19 +85,37 @@ function Dashboard() {
   }, [token]);
 
   const handleAddCustomer = async () => {
-  try {
-    const token = localStorage.getItem('jwt_token');
-    await axios.post(`${API_BASE}/customers`, newCustomer, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setMessage('Customer added successfully!');
-    setNewCustomer({ firstName: '', lastName: '', phone1: '', email: '', company: '', address: '', city: '', state: 'AZ', zip: '', billName: '', billEmail: '', billPhone: '', billAddress: '', billCity: '', billState: 'AZ', billZip: '', multiUnit: false });
-    const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-    setCustomers(res.data);
-  } catch (err) {
-    setMessage(err.response?.data?.error || 'Failed to add customer');
-  }
-};
+    try {
+      const res = await axios.post(`${API_BASE}/customers`, newCustomer, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Customer added successfully!');
+      setNewCustomer({
+        firstName: '',
+        lastName: '',
+        phone1: '',
+        email: '',
+        company: '',
+        address: '',
+        city: '',
+        state: 'AZ',
+        zip: '',
+        billName: '',
+        billEmail: '',
+        billPhone: '',
+        billAddress: '',
+        billCity: '',
+        billState: 'AZ',
+        billZip: '',
+        multiUnit: false
+      });
+      // Refresh customer list
+      const getRes = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+      setCustomers(getRes.data);
+    } catch (err) {
+      setMessage(err.response?.data?.error || 'Failed to add customer');
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -182,41 +200,4 @@ function Dashboard() {
                     <MenuItem value="MD">MD</MenuItem>
                     <MenuItem value="MA">MA</MenuItem>
                     <MenuItem value="MI">MI</MenuItem>
-                    <MenuItem value="MN">MN</MenuItem>
-                    <MenuItem value="MS">MS</MenuItem>
-                    <MenuItem value="MO">MO</MenuItem>
-                    <MenuItem value="MT">MT</MenuItem>
-                    <MenuItem value="NE">NE</MenuItem>
-                    <MenuItem value="NV">NV</MenuItem>
-                    <MenuItem value="NH">NH</MenuItem>
-                    <MenuItem value="NJ">NJ</MenuItem>
-                    <MenuItem value="NM">NM</MenuItem>
-                    <MenuItem value="NY">NY</MenuItem>
-                    <MenuItem value="NC">NC</MenuItem>
-                    <MenuItem value="ND">ND</MenuItem>
-                    <MenuItem value="OH">OH</MenuItem>
-                    <MenuItem value="OK">OK</MenuItem>
-                    <MenuItem value="OR">OR</MenuItem>
-                    <MenuItem value="PA">PA</MenuItem>
-                    <MenuItem value="RI">RI</MenuItem>
-                    <MenuItem value="SC">SC</MenuItem>
-                    <MenuItem value="SD">SD</MenuItem>
-                    <MenuItem value="TN">TN</MenuItem>
-                    <MenuItem value="TX">TX</MenuItem>
-                    <MenuItem value="UT">UT</MenuItem>
-                    <MenuItem value="VT">VT</MenuItem>
-                    <MenuItem value="VA">VA</MenuItem>
-                    <MenuItem value="WA">WA</MenuItem>
-                    <MenuItem value="WV">WV</MenuItem>
-                    <MenuItem value="WI">WI</MenuItem>
-                    <MenuItem value="WY">WY</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
-                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
-              </Box>
-
-              <Typography variant="h6">Bill To (if different)</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({...newCustomer, billName: e.target.value})} />
-                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({...newCustomer, billEmail: e
+                    <MenuItem
