@@ -1,32 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Alert,
-  Container,
-  Tabs,
-  Tab,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Checkbox
-} from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -38,11 +13,7 @@ const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
 
-const US_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA',
-  'ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK',
-  'OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'
-];
+const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -55,7 +26,7 @@ function Login() {
       localStorage.setItem('jwt_token', res.data.access_token);
       window.location.href = '/dashboard';
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.msg || 'Login failed');
+      setError(err.response?.data?.error || 'Login failed');
     }
   };
 
@@ -117,11 +88,8 @@ function Dashboard() {
   useEffect(() => {
     if (token) {
       axios.get(`${API_BASE}/branches`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setBranches(res.data || []))
-        .catch(err => {
-          console.error(err);
-          setBranches([]);
-        });
+        .then(res => setBranches(res.data))
+        .catch(err => console.error(err));
     }
   }, [token]);
 
@@ -129,11 +97,8 @@ function Dashboard() {
     if (token) {
       const url = selectedBranch ? `${API_BASE}/customers?branch_id=${selectedBranch}` : `${API_BASE}/customers`;
       axios.get(url, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setCustomers(res.data || []))
-        .catch(err => {
-          console.error(err);
-          setCustomers([]);
-        });
+        .then(res => setCustomers(res.data))
+        .catch(err => console.error(err));
     }
   }, [token, selectedBranch]);
 
@@ -163,11 +128,9 @@ function Dashboard() {
         multiUnit: false
       });
       const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-      setCustomers(res.data || []);
+      setCustomers(res.data);
     } catch (err) {
-      console.error('Add customer failed', err);
-      const serverMsg = err.response?.data?.error || err.response?.data?.msg || err.message;
-      setMessage(serverMsg || 'Failed to add customer');
+      setMessage(err.response?.data?.error || 'Failed to add customer');
     }
   };
 
@@ -176,7 +139,6 @@ function Dashboard() {
     window.location.href = '/';
   };
 
-  // Sample events for react-big-calendar
   const events = [
     {
       title: 'Monthly Service - Sunset Apartments',
@@ -200,28 +162,17 @@ function Dashboard() {
               AZEX PestGuard Portal
             </Typography>
           </Box>
-
-          {/* Branch selector */}
-          <FormControl sx={{ minWidth: 220, mr: 2, backgroundColor: 'white', borderRadius: 1 }}>
-            <InputLabel id="branch-select-label">Branch</InputLabel>
-            <Select
-              labelId="branch-select-label"
-              value={selectedBranch}
-              label="Branch"
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              size="small"
-            >
+          <FormControl sx={{ minWidth: 200, mr: 2 }}>
+            <InputLabel>Branch</InputLabel>
+            <Select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
               <MenuItem value="">
                 <em>All Branches</em>
               </MenuItem>
               {branches.map(b => (
-                <MenuItem key={b.id} value={b.id}>
-                  {b.name} ({b.city}, {b.state})
-                </MenuItem>
+                <MenuItem key={b.id} value={b.id}>{b.name} ({b.city}, {b.state})</MenuItem>
               ))}
             </Select>
           </FormControl>
-
           <Button color="inherit" onClick={logout}>Logout</Button>
         </Toolbar>
       </AppBar>
@@ -239,7 +190,6 @@ function Dashboard() {
           </Tabs>
         </Paper>
 
-        {/* Dashboard tab (0) */}
         {tab === 0 && (
           <Box>
             <Typography variant="h5" gutterBottom>
@@ -251,9 +201,8 @@ function Dashboard() {
           </Box>
         )}
 
-        {/* Calendar tab (1) */}
         {tab === 1 && (
-          <Box sx={{ height: '700px' }}>
+          <Box sx={{ height: '600px' }}>
             <Calendar
               localizer={localizer}
               events={events}
@@ -264,39 +213,6 @@ function Dashboard() {
           </Box>
         )}
 
-        {/* Invoices tab (2) */}
-        {tab === 2 && (
-          <Box>
-            <Typography variant="h5">Invoices</Typography>
-            <Typography>Coming soon</Typography>
-          </Box>
-        )}
-
-        {/* Service History tab (3) */}
-        {tab === 3 && (
-          <Box>
-            <Typography variant="h5">Service History</Typography>
-            <Typography>Coming soon</Typography>
-          </Box>
-        )}
-
-        {/* Bug Reporting tab (4) */}
-        {tab === 4 && (
-          <Box>
-            <Typography variant="h5">Bug Reporting</Typography>
-            <Typography>Coming soon</Typography>
-          </Box>
-        )}
-
-        {/* Payments tab (5) */}
-        {tab === 5 && (
-          <Box>
-            <Typography variant="h5">Payments</Typography>
-            <Typography>Coming soon</Typography>
-          </Box>
-        )}
-
-        {/* Customers tab (6) */}
         {tab === 6 && (
           <Box>
             <Typography variant="h5" gutterBottom>
@@ -306,51 +222,47 @@ function Dashboard() {
             <Box sx={{ mb: 4 }}>
               <Typography variant="h6">Basic Information</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({ ...newCustomer, firstName: e.target.value })} />
-                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({ ...newCustomer, lastName: e.target.value })} />
-                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({ ...newCustomer, phone1: e.target.value })} />
-                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })} />
-                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({ ...newCustomer, company: e.target.value })} />
-                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })} />
+                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
+                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
+                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
+                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
+                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
+                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
+                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
                 <FormControl>
                   <InputLabel>State</InputLabel>
-                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({ ...newCustomer, state: e.target.value })}>
+                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
                     {US_STATES.map(state => (
                       <MenuItem key={state} value={state}>{state}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
-                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({ ...newCustomer, zip: e.target.value })} />
-                <FormControlLabel
-                  control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({ ...newCustomer, multiUnit: e.target.checked })} />}
-                  label="Multi-Unit Property"
-                  sx={{ gridColumn: 'span 2' }}
-                />
+                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
+                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
               </Box>
 
               <Typography variant="h6">Bill To (if different)</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({ ...newCustomer, billName: e.target.value })} />
-                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({ ...newCustomer, billEmail: e.target.value })} />
-                <TextField label="Bill To Phone" value={newCustomer.billPhone} onChange={(e) => setNewCustomer({ ...newCustomer, billPhone: e.target.value })} />
-                <TextField label="Bill To Address" value={newCustomer.billAddress} onChange={(e) => setNewCustomer({ ...newCustomer, billAddress: e.target.value })} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="Bill To City" value={newCustomer.billCity} onChange={(e) => setNewCustomer({ ...newCustomer, billCity: e.target.value })} />
+                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({...newCustomer, billName: e.target.value})} />
+                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({...newCustomer, billEmail: e.target.value})} />
+                <TextField label="Bill To Phone" value={newCustomer.billPhone} onChange={(e) => setNewCustomer({...newCustomer, billPhone: e.target.value})} />
+                <TextField label="Bill To Address" value={newCustomer.billAddress} onChange={(e) => setNewCustomer({...newCustomer, billAddress: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
+                <TextField label="Bill To City" value={newCustomer.billCity} onChange={(e) => setNewCustomer({...newCustomer, billCity: e.target.value})} />
                 <FormControl>
                   <InputLabel>Bill To State</InputLabel>
-                  <Select value={newCustomer.billState} onChange={(e) => setNewCustomer({ ...newCustomer, billState: e.target.value })}>
+                  <Select value={newCustomer.billState} onChange={(e) => setNewCustomer({...newCustomer, billState: e.target.value})}>
                     {US_STATES.map(state => (
                       <MenuItem key={state} value={state}>{state}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
-                <TextField label="Bill To Zip" value={newCustomer.billZip} onChange={(e) => setNewCustomer({ ...newCustomer, billZip: e.target.value })} />
+                <TextField label="Bill To Zip" value={newCustomer.billZip} onChange={(e) => setNewCustomer({...newCustomer, billZip: e.target.value})} />
               </Box>
 
               <Button variant="contained" onClick={handleAddCustomer} sx={{ mt: 2 }}>
                 Add Customer
               </Button>
-              {message && <Alert severity={message.toLowerCase().includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
+              {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
             </Box>
 
             <Typography variant="h6">Current Customers</Typography>
@@ -384,6 +296,14 @@ function Dashboard() {
             </Table>
           </Box>
         )}
+
+        {/* Other tabs placeholder */}
+        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
+        {tab === 1 && <Box><Typography variant="h5">Calendar</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
   );
