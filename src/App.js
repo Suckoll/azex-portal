@@ -54,6 +54,7 @@ function Dashboard() {
   const [tab, setTab] = useState(0);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState('');
+  const [customers, setCustomers] = useState([]);
 
   const token = localStorage.getItem('jwt_token');
 
@@ -64,6 +65,15 @@ function Dashboard() {
         .catch(err => console.error(err));
     }
   }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      const url = selectedBranch ? `${API_BASE}/customers?branch_id=${selectedBranch}` : `${API_BASE}/customers`;
+      axios.get(url, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setCustomers(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [token, selectedBranch]);
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -83,6 +93,9 @@ function Dashboard() {
           <FormControl sx={{ minWidth: 200, mr: 2 }}>
             <InputLabel>Branch</InputLabel>
             <Select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
+              <MenuItem value="">
+                <em>All Branches</em>
+              </MenuItem>
               {branches.map(b => (
                 <MenuItem key={b.id} value={b.id}>{b.name} ({b.city}, {b.state})</MenuItem>
               ))}
@@ -96,7 +109,6 @@ function Dashboard() {
         <Paper sx={{ mb: 4 }}>
           <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
             <Tab label="Dashboard" />
-            <Tab label="Calendar" />
             <Tab label="Invoices" />
             <Tab label="Service History" />
             <Tab label="Bug Reporting" />
@@ -105,7 +117,6 @@ function Dashboard() {
           </Tabs>
         </Paper>
 
-        {/* Tabs content placeholder */}
         {tab === 0 && (
           <Box>
             <Typography variant="h5" gutterBottom>
@@ -114,6 +125,40 @@ function Dashboard() {
             <Typography paragraph>
               Selected branch: {branches.find(b => b.id === selectedBranch)?.name || 'All Branches'}
             </Typography>
+          </Box>
+        )}
+
+        {tab === 5 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Customers ({branches.find(b => b.id === selectedBranch)?.name || 'All Branches'})
+            </Typography>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Address</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {customers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No customers in this branch</TableCell>
+                  </TableRow>
+                ) : (
+                  customers.map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell>{c.firstName} {c.lastName}</TableCell>
+                      <TableCell>{c.email}</TableCell>
+                      <TableCell>{c.phone1}</TableCell>
+                      <TableCell>{c.address}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </Box>
         )}
       </Container>
