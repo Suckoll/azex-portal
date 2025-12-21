@@ -59,6 +59,8 @@ function Login() {
 
 function Dashboard() {
   const [tab, setTab] = useState(0);
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState('');
   const [customers, setCustomers] = useState([]);
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
@@ -85,11 +87,20 @@ function Dashboard() {
 
   useEffect(() => {
     if (token) {
-      axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setCustomers(res.data))
+      axios.get(`${API_BASE}/branches`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setBranches(res.data))
         .catch(err => console.error(err));
     }
   }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      const url = selectedBranch ? `${API_BASE}/customers?branch_id=${selectedBranch}` : `${API_BASE}/customers`;
+      axios.get(url, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setCustomers(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [token, selectedBranch]);
 
   const handleAddCustomer = async () => {
     try {
@@ -151,6 +162,17 @@ function Dashboard() {
               AZEX PestGuard Portal
             </Typography>
           </Box>
+          <FormControl sx={{ minWidth: 200, mr: 2 }}>
+            <InputLabel>Branch</InputLabel>
+            <Select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
+              <MenuItem value="">
+                <em>All Branches</em>
+              </MenuItem>
+              {branches.map(b => (
+                <MenuItem key={b.id} value={b.id}>{b.name} ({b.city}, {b.state})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Button color="inherit" onClick={logout}>Logout</Button>
         </Toolbar>
       </AppBar>
@@ -174,7 +196,7 @@ function Dashboard() {
               Welcome to Your AZEX Portal
             </Typography>
             <Typography paragraph>
-              Your system is live! Use the tabs to manage everything.
+              Selected branch: {branches.find(b => b.id === selectedBranch)?.name || 'All Branches'}
             </Typography>
           </Box>
         )}
@@ -197,41 +219,4 @@ function Dashboard() {
               Manage Customers
             </Typography>
 
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6">Basic Information</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
-                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
-                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
-                <TextField label="Email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
-                <TextField label="Company Name" value={newCustomer.company} onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})} />
-                <TextField label="Address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="City" value={newCustomer.city} onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})} />
-                <FormControl>
-                  <InputLabel>State</InputLabel>
-                  <Select value={newCustomer.state} onChange={(e) => setNewCustomer({...newCustomer, state: e.target.value})}>
-                    {US_STATES.map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField label="Zip Code" value={newCustomer.zip} onChange={(e) => setNewCustomer({...newCustomer, zip: e.target.value})} />
-                <FormControlLabel control={<Checkbox checked={newCustomer.multiUnit} onChange={(e) => setNewCustomer({...newCustomer, multiUnit: e.target.checked})} />} label="Multi-Unit Property" sx={{ gridColumn: 'span 2' }} />
-              </Box>
-
-              <Typography variant="h6">Bill To (if different)</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                <TextField label="Bill To Name" value={newCustomer.billName} onChange={(e) => setNewCustomer({...newCustomer, billName: e.target.value})} />
-                <TextField label="Bill To Email" value={newCustomer.billEmail} onChange={(e) => setNewCustomer({...newCustomer, billEmail: e.target.value})} />
-                <TextField label="Bill To Phone" value={newCustomer.billPhone} onChange={(e) => setNewCustomer({...newCustomer, billPhone: e.target.value})} />
-                <TextField label="Bill To Address" value={newCustomer.billAddress} onChange={(e) => setNewCustomer({...newCustomer, billAddress: e.target.value})} fullWidth sx={{ gridColumn: 'span 2' }} />
-                <TextField label="Bill To City" value={newCustomer.billCity} onChange={(e) => setNewCustomer({...newCustomer, billCity: e.target.value})} />
-                <FormControl>
-                  <InputLabel>Bill To State</InputLabel>
-                  <Select value={newCustomer.billState} onChange={(e) => setNewCustomer({...newCustomer, billState: e.target.value})}>
-                    {US_STATES.map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField label="Bill
+            <Box sx={{ mb: 4
