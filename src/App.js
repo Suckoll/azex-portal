@@ -88,7 +88,7 @@ function Dashboard() {
   useEffect(() => {
     if (token) {
       axios.get(`${API_BASE}/branches`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setBranches(res.data))
+        .then(res => setBranches(res.data || []))
         .catch(err => console.error(err));
     }
   }, [token]);
@@ -97,7 +97,7 @@ function Dashboard() {
     if (token) {
       const url = selectedBranch ? `${API_BASE}/customers?branch_id=${selectedBranch}` : `${API_BASE}/customers`;
       axios.get(url, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setCustomers(res.data))
+        .then(res => setCustomers(res.data || []))
         .catch(err => console.error(err));
     }
   }, [token, selectedBranch]);
@@ -128,7 +128,7 @@ function Dashboard() {
         multiUnit: false
       });
       const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
-      setCustomers(res.data);
+      setCustomers(res.data || []);
     } catch (err) {
       setMessage(err.response?.data?.error || 'Failed to add customer');
     }
