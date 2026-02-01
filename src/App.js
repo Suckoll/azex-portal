@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert, Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -56,39 +56,43 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(1); // Start on Calendar
-  const [technicians, setTechnicians] = useState([]);
-  const [selectedTech, setSelectedTech] = useState('');
-  const [events, setEvents] = useState([]);
+  const [tab, setTab] = useState(0);
+  const [branches, setBranches] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [newEmployee, setNewEmployee] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    branch_id: ''
+  });
+  const [message, setMessage] = useState('');
 
   const token = localStorage.getItem('jwt_token');
 
   useEffect(() => {
     if (token) {
-      axios.get(`${API_BASE}/technicians`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setTechnicians(res.data))
+      axios.get(`${API_BASE}/branches`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setBranches(res.data))
+        .catch(err => console.error(err));
+      axios.get(`${API_BASE}/employees`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setEmployees(res.data))
         .catch(err => console.error(err));
     }
   }, [token]);
 
-  useEffect(() => {
-    if (selectedTech && token) {
-      axios.get(`${API_BASE}/jobs/${selectedTech}`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => {
-          const formatted = res.data.map(job => ({
-            id: job.id,
-            title: job.title,
-            start: new Date(job.start),
-            end: new Date(job.end),
-            description: job.description
-          }));
-          setEvents(formatted);
-        })
-        .catch(err => console.error(err));
-    } else {
-      setEvents([]);
+  const handleAddEmployee = async () => {
+    try {
+      await axios.post(`${API_BASE}/employees`, newEmployee, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Employee added successfully!');
+      setNewEmployee({ name: '', email: '', phone: '', branch_id: '' });
+      const res = await axios.get(`${API_BASE}/employees`, { headers: { Authorization: `Bearer ${token}` } });
+      setEmployees(res.data);
+    } catch (err) {
+      setMessage(err.response?.data?.error || 'Failed to add employee');
     }
-  }, [selectedTech, token]);
+  };
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -119,37 +123,71 @@ function Dashboard() {
             <Tab label="Bug Reporting" />
             <Tab label="Payments" />
             <Tab label="Customers" />
+            <Tab label="Employees" />
           </Tabs>
         </Paper>
 
-        {tab === 1 && (
+        {tab === 7 && (
           <Box>
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Select Technician</InputLabel>
-              <Select value={selectedTech} onChange={(e) => setSelectedTech(e.target.value)}>
-                <MenuItem value="">
-                  <em>All Technicians</em>
-                </MenuItem>
-                {technicians.map(tech => (
-                  <MenuItem key={tech.id} value={tech.id}>{tech.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Typography variant="h5" gutterBottom>
+              Manage Employees
+            </Typography>
 
-            <Box sx={{ height: '600px' }}>
-              <Calendar
-                localizer={localizer}
-                events={events}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: '100%' }}
-              />
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6">Add New Employee</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                <TextField label="Name" value={newEmployee.name} onChange={(e) => setNewEmployee({...newEmployee, name: e.target.value})} />
+                <TextField label="Email" value={newEmployee.email} onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})} />
+                <TextField label="Phone" value={newEmployee.phone} onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})} />
+                <FormControl>
+                  <InputLabel>Branch</InputLabel>
+                  <Select value={newEmployee.branch_id} onChange={(e) => setNewEmployee({...newEmployee, branch_id: e.target.value})}>
+                    {branches.map(b => (
+                      <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <Button variant="contained" onClick={handleAddEmployee} sx={{ mt: 2 }}>
+                Add Employee
+              </Button>
+              {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
             </Box>
+
+            <Typography variant="h6">Current Employees</Typography>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Branch</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {employees.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No employees yet — add one above!</TableCell>
+                  </TableRow>
+                ) : (
+                  employees.map(e => (
+                    <TableRow key={e.id}>
+                      <TableCell>{e.name}</TableCell>
+                      <TableCell>{e.email}</TableCell>
+                      <TableCell>{e.phone || 'N/A'}</TableCell>
+                      <TableCell>{branches.find(b => b.id === e.branch_id)?.name || 'N/A'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </Box>
         )}
 
         {/* Other tabs placeholder */}
         {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
+        {tab === 1 && <Box><Typography variant="h5">Calendar</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
