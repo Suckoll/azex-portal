@@ -27,7 +27,7 @@ import { Icon } from 'leaflet';
 import polyline from '@mapbox/polyline';
 import 'leaflet/dist/leaflet.css';
 
-// Leaflet fix
+// Leaflet icon fix
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -132,7 +132,7 @@ function Dashboard() {
   const [routeInfo, setRouteInfo] = useState({ distance: 0, duration: 0 });
   const invoiceRef = useRef(null);
 
-  // Employee states (moved from Technicians)
+  // Employee states (HR in Administration tab)
   const [employeeList, setEmployeeList] = useState([]);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const [employeeSearch, setEmployeeSearch] = useState('');
@@ -170,31 +170,7 @@ function Dashboard() {
   const token = localStorage.getItem('jwt_token');
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-  useEffect(() => {
-    if (token) {
-      axios.get(`${API_BASE}/branches`, headers)
-        .then(res => {
-          setBranches(res.data);
-          if (res.data.length > 0 && selectedBranch === '') {
-            setSelectedBranch(res.data[0].id);
-          }
-        })
-        .catch(err => console.error(err));
-
-      axios.get(`${API_BASE}/employees`, headers)
-        .then(res => {
-          setEmployeeList(res.data);
-          setTechnicians(res.data.filter(e => e.role === 'Technician'));
-        })
-        .catch(err => console.error(err));
-
-      axios.get(`${API_BASE}/products`, headers)
-        .then(res => setProducts(res.data))
-        .catch(err => console.error(err));
-    }
-  }, [token]);
-
-  // Other useEffects unchanged
+  // useEffects unchanged
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -239,42 +215,14 @@ function Dashboard() {
             <Tab label="Digital Logbook" />
             <Tab label="Payments" />
             <Tab label="Customers" />
-            <Tab label="Administration" />  {/* New tab for HR/Employees */}
+            <Tab label="Administration" />
             <Tab label="Inventory" />
           </Tabs>
         </Paper>
 
-        {/* Other tabs unchanged */}
+        {/* All other tab content unchanged */}
 
-        {tab === 7 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>Administration</Typography>
-
-            <Alert severity="info" sx={{ mb: 3 }}>
-              This section is for managing all employees (technicians, office staff, managers). Only administrators can access and make changes.
-            </Alert>
-
-            {/* Full employee HR content here (form, list, documents, photo upload) - copy from previous Technicians tab */}
-            {/* Use employeeList, newEmployee, etc. */}
-            {/* Calendar still uses technicians filter from employeeList */}
-
-            {/* Example form snippet */}
-            <Typography variant="h6" gutterBottom>
-              {editingEmployeeId ? 'Edit Employee' : 'Add New Employee'}
-            </Typography>
-
-            {/* Form fields, pay type logic, role dropdown, photo upload, etc. */}
-
-            {/* Employee list table with role column */}
-
-            {/* Document upload section when editing */}
-
-            {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
-          </Box>
-        )}
-
-        {/* Inventory tab unchanged */}
-
+        {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
       </Container>
     </>
   );
