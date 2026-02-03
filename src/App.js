@@ -142,13 +142,13 @@ function Dashboard() {
   const events = [
     {
       title: 'Monthly Service - Sunset Apartments',
-      start: new Date(2025, 11, 22, 9, 0),
-      end: new Date(2025, 11, 22, 12, 0),
+      start: new Date(2026, 1, 22, 9, 0),
+      end: new Date(2026, 1, 22, 12, 0),
     },
     {
       title: 'Emergency Call - Rob Suckoll',
-      start: new Date(2025, 11, 23, 14, 0),
-      end: new Date(2025, 11, 23, 16, 0),
+      start: new Date(2026, 1, 23, 14, 0),
+      end: new Date(2026, 1, 23, 16, 0),
     },
   ];
 
@@ -202,7 +202,7 @@ function Dashboard() {
         )}
 
         {tab === 1 && (
-          <Box sx={{ height: '600px' }}>
+          <Box sx={{ height: '700px' }}>
             <Calendar
               localizer={localizer}
               events={events}
@@ -297,9 +297,7 @@ function Dashboard() {
           </Box>
         )}
 
-        {/* Other tabs placeholder */}
-        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
-        {tab === 1 && <Box><Typography variant="h5">Calendar</Typography><Typography>Coming soon</Typography></Box>}
+        {/* Placeholder for other tabs */}
         {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
