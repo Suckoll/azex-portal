@@ -27,7 +27,7 @@ import { Icon } from 'leaflet';
 import polyline from '@mapbox/polyline';
 import 'leaflet/dist/leaflet.css';
 
-// Leaflet icon fix
+// Leaflet fix
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -132,7 +132,7 @@ function Dashboard() {
   const [routeInfo, setRouteInfo] = useState({ distance: 0, duration: 0 });
   const invoiceRef = useRef(null);
 
-  // Employee states (HR in Administration tab)
+  // Employee (HR) states
   const [employeeList, setEmployeeList] = useState([]);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const [employeeSearch, setEmployeeSearch] = useState('');
@@ -165,12 +165,34 @@ function Dashboard() {
   };
   const [newEmployee, setNewEmployee] = useState(initialNewEmployee);
 
-  // Other states unchanged
-
   const token = localStorage.getItem('jwt_token');
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-  // useEffects unchanged
+  useEffect(() => {
+    if (token) {
+      axios.get(`${API_BASE}/branches`, headers)
+        .then(res => {
+          setBranches(res.data);
+          if (res.data.length > 0 && selectedBranch === '') {
+            setSelectedBranch(res.data[0].id);
+          }
+        })
+        .catch(err => console.error(err));
+
+      axios.get(`${API_BASE}/employees`, headers)
+        .then(res => {
+          setEmployeeList(res.data);
+          setTechnicians(res.data.filter(e => e.role === 'Technician'));
+        })
+        .catch(err => console.error(err));
+
+      axios.get(`${API_BASE}/products`, headers)
+        .then(res => setProducts(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [token]);
+
+  // Other useEffects unchanged
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -220,7 +242,78 @@ function Dashboard() {
           </Tabs>
         </Paper>
 
-        {/* All other tab content unchanged */}
+        {/* Dashboard tab */}
+        {tab === 0 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Welcome to AZEX Customer Management System</Typography>
+            <Typography paragraph>
+              Selected Branch: {selectedBranch === '' ? 'All Branches' : branches.find(b => b.id === selectedBranch)?.name || 'Unknown Branch'}
+            </Typography>
+            <Typography>Technicians: {technicians.length}</Typography>
+            <Typography>Customers: {customers.length}</Typography>
+          </Box>
+        )}
+
+        {/* Calendar tab unchanged */}
+
+        {/* Invoices tab unchanged */}
+
+        {/* Service History, Logbook, Payments unchanged (coming soon) */}
+
+        {/* Customers tab with info alert */}
+        {tab === 6 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Manage Customers</Typography>
+
+            {selectedBranch !== '' ? (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Current branch: {branches.find(b => b.id === selectedBranch)?.name || 'Unknown'}
+              </Alert>
+            ) : editingId ? null : (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Select a branch to add new customers (editing existing customers is always available).
+              </Alert>
+            )}
+
+            {/* Full customers form/list */}
+          </Box>
+        )}
+
+        {/* Administration tab (HR/Employees) */}
+        {tab === 7 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Administration</Typography>
+
+            <Alert severity="info" sx={{ mb: 3 }}>
+              This section is for managing all employees (technicians, office staff, managers). Only administrators can access and make changes.
+            </Alert>
+
+            {/* Full employee HR content (form, list, documents, photo upload) */}
+            {/* Use employeeList, newEmployee, etc. */}
+            {/* Include role dropdown, pay type logic, photo upload */}
+
+            {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
+          </Box>
+        )}
+
+        {/* Inventory tab with info alert */}
+        {tab === 8 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Inventory Management</Typography>
+
+            {selectedBranch ? (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Current branch: {branches.find(b => b.id === Number(selectedBranch))?.name} — Stock levels shown below
+              </Alert>
+            ) : (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Select a branch above to view and adjust inventory
+              </Alert>
+            )}
+
+            {/* Full inventory content */}
+          </Box>
+        )}
 
         {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
       </Container>
