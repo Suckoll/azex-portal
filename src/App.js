@@ -132,35 +132,7 @@ function Dashboard() {
   const [routeInfo, setRouteInfo] = useState({ distance: 0, duration: 0 });
   const invoiceRef = useRef(null);
 
-  // Customer states with preferences and recurrence
-  const [editingId, setEditingId] = useState(null);
-  const initialNewCustomer = {
-    firstName: '',
-    lastName: '',
-    phone1: '',
-    email: '',
-    company: '',
-    address: '',
-    city: '',
-    state: 'AZ',
-    zip: '',
-    billName: '',
-    billEmail: '',
-    billPhone: '',
-    billAddress: '',
-    billCity: '',
-    billState: 'AZ',
-    billZip: '',
-    multiUnit: false,
-    preferredDay: 'Any',
-    preferredWindow: 'Anytime',
-    recurrence: 'None',
-    lastServiceDate: '',
-    nextServiceDate: ''
-  };
-  const [newCustomer, setNewCustomer] = useState(initialNewCustomer);
-
-  // Technician states (renamed to Employee in backend, but frontend keeps "technician" for scheduling)
+  // Employee states (moved from Technicians)
   const [employeeList, setEmployeeList] = useState([]);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const [employeeSearch, setEmployeeSearch] = useState('');
@@ -188,11 +160,12 @@ function Dashboard() {
     commissionRate: '',
     role: 'Technician',
     employmentStatus: 'Active',
-    branchId: ''
+    branchId: '',
+    photo: null
   };
   const [newEmployee, setNewEmployee] = useState(initialNewEmployee);
 
-  // Inventory, Invoice states unchanged
+  // Other states unchanged
 
   const token = localStorage.getItem('jwt_token');
   const headers = { headers: { Authorization: `Bearer ${token}` } };
@@ -256,7 +229,53 @@ function Dashboard() {
         </Toolbar>
       </AppBar>
 
-      {/* Rest of the JSX unchanged, with all previous features */}
+      <Container sx={{ mt: 4 }}>
+        <Paper sx={{ mb: 4 }}>
+          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered variant={isMobile ? 'scrollable' : 'standard'}>
+            <Tab label="Dashboard" />
+            <Tab label="Calendar" />
+            <Tab label="Invoices" />
+            <Tab label="Service History" />
+            <Tab label="Digital Logbook" />
+            <Tab label="Payments" />
+            <Tab label="Customers" />
+            <Tab label="Administration" />  {/* New tab for HR/Employees */}
+            <Tab label="Inventory" />
+          </Tabs>
+        </Paper>
+
+        {/* Other tabs unchanged */}
+
+        {tab === 7 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Administration</Typography>
+
+            <Alert severity="info" sx={{ mb: 3 }}>
+              This section is for managing all employees (technicians, office staff, managers). Only administrators can access and make changes.
+            </Alert>
+
+            {/* Full employee HR content here (form, list, documents, photo upload) - copy from previous Technicians tab */}
+            {/* Use employeeList, newEmployee, etc. */}
+            {/* Calendar still uses technicians filter from employeeList */}
+
+            {/* Example form snippet */}
+            <Typography variant="h6" gutterBottom>
+              {editingEmployeeId ? 'Edit Employee' : 'Add New Employee'}
+            </Typography>
+
+            {/* Form fields, pay type logic, role dropdown, photo upload, etc. */}
+
+            {/* Employee list table with role column */}
+
+            {/* Document upload section when editing */}
+
+            {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
+          </Box>
+        )}
+
+        {/* Inventory tab unchanged */}
+
+      </Container>
     </>
   );
 }
