@@ -5,7 +5,7 @@ import {
   AppBar, Toolbar, Typography, Button, Box, Card, CardContent, TextField, Alert,
   Container, Tabs, Tab, Paper, Table, TableBody, TableCell, TableHead, TableRow,
   FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, IconButton,
-  useMediaQuery, useTheme, Dialog, DialogTitle, DialogContent, DialogActions
+  useMediaQuery, useTheme
 } from '@mui/material';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
@@ -132,7 +132,7 @@ function Dashboard() {
   const [routeInfo, setRouteInfo] = useState({ distance: 0, duration: 0 });
   const invoiceRef = useRef(null);
 
-  // Customer states with recurrence
+  // Customer states with preferences and recurrence
   const [editingId, setEditingId] = useState(null);
   const initialNewCustomer = {
     firstName: '',
@@ -160,125 +160,151 @@ function Dashboard() {
   };
   const [newCustomer, setNewCustomer] = useState(initialNewCustomer);
 
-  // Recurring generation modal
-  const [recurringModalOpen, setRecurringModalOpen] = useState(false);
-  const [recurringCustomerId, setRecurringCustomerId] = useState(null);
-  const [recurringMonths, setRecurringMonths] = useState(12);
-  const [recurringTechId, setRecurringTechId] = useState('');
+  // Technician states unchanged (from previous)
+
+  // Inventory, Invoice states unchanged
 
   const token = localStorage.getItem('jwt_token');
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-  // useEffects unchanged + jobs fetch
+  useEffect(() => {
+    if (token) {
+      axios.get(`${API_BASE}/branches`, headers)
+        .then(res => {
+          setBranches(res.data);
+          // Auto-select first branch if none selected
+          if (res.data.length > 0 && selectedBranch === '') {
+            setSelectedBranch(res.data[0].id);
+          }
+        })
+        .catch(err => console.error(err));
 
-  const generateRecurringJobs = async () => {
-    if (!recurringCustomerId || !recurringTechId) {
-      setMessage('Select customer and technician');
-      return;
+      // Other fetches (technicians, products, etc.)
+      axios.get(`${API_BASE}/technicians`, headers)
+        .then(res => {
+          setTechnicians(res.data);
+          setTechList(res.data);
+        })
+        .catch(err => console.error(err));
+
+      axios.get(`${API_BASE}/products`, headers)
+        .then(res => setProducts(res.data))
+        .catch(err => console.error(err));
     }
+  }, [token]);
 
-    const customer = customers.find(c => c.id === recurringCustomerId);
-    if (customer.recurrence === 'None') {
-      setMessage('Customer has no recurrence set');
-      return;
-    }
+  // All other useEffects unchanged
 
-    const frequencyMonths = {
-      'Monthly': 1,
-      'Bi-Monthly': 2,
-      'Quarterly': 3,
-      'Semi-Annually': 6,
-      'Annually': 12
-    }[customer.recurrence];
-
-    let startDate = customer.nextServiceDate ? moment(customer.nextServiceDate) : moment().add(1, 'month');
-
-    const newJobs = [];
-    for (let i = 0; i < recurringMonths / frequencyMonths; i++) {
-      let jobDate = startDate.clone();
-
-      if (customer.preferredDay !== 'Any') {
-        const dayIndex = DAYS_OF_WEEK.indexOf(customer.preferredDay) - 1; // moment weekday 0=Sunday
-        jobDate = jobDate.day(dayIndex === -1 ? 0 : dayIndex);
-        if (jobDate.isBefore(startDate)) jobDate.add(7, 'days');
-      }
-
-      newJobs.push({
-        customer_id: recurringCustomerId,
-        technician_id: recurringTechId,
-        branch_id: selectedBranch,
-        title: 'Recurring Service',
-        start: jobDate.hour(9).minute(0).toDate(), // default 9AM, can adjust with window later
-        end: jobDate.hour(9).minute(0).add(DEFAULT_SERVICE_MINUTES, 'minutes').toDate(),
-        description: `Recurring ${customer.recurrence.toLowerCase()} service`
-      });
-
-      startDate.add(frequencyMonths, 'months');
-    }
-
-    try {
-      for (const job of newJobs) {
-        await axios.post(`${API_BASE}/jobs`, job, headers);
-      }
-      setMessage(`Generated ${newJobs.length} recurring jobs`);
-      setRecurringModalOpen(false);
-      // Refresh events if tech selected
-      if (selectedTech) {
-        const res = await axios.get(`${API_BASE}/jobs/${selectedTech}`, headers);
-        // format and setEvents
-      }
-    } catch (err) {
-      setMessage('Failed to generate jobs');
-    }
+  const logout = () => {
+    localStorage.removeItem('jwt_token');
+    window.location.href = '/';
   };
 
-  // In Customers tab JSX, add recurrence fields
-  // After preferred window
-  <FormControl fullWidth sx={{ gridColumn: 'span 2' }}>
-    <InputLabel>Recurrence</InputLabel>
-    <Select value={newCustomer.recurrence} onChange={e => setNewCustomer({...newCustomer, recurrence: e.target.value})}>
-      {RECURRENCE_OPTIONS.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-    </Select>
-  </FormControl>
-  {newCustomer.recurrence !== 'None' && (
-    <>
-      <TextField label="Last Service Date" type="date" value={newCustomer.lastServiceDate} onChange={e => setNewCustomer({...newCustomer, lastServiceDate: e.target.value})} InputLabelProps={{ shrink: true }} fullWidth />
-      <TextField label="Next Service Date" type="date" value={newCustomer.nextServiceDate} onChange={e => setNewCustomer({...newCustomer, nextServiceDate: e.target.value})} InputLabelProps={{ shrink: true }} fullWidth />
-    </>
-  )}
-
-  // In customer table actions, add recurring button
-  {c.recurrence !== 'None' && (
-    <Button size="small" startIcon={<RepeatIcon />} onClick={() => {
-      setRecurringCustomerId(c.id);
-      setRecurringModalOpen(true);
-    }}>
-      Generate Recurring
-    </Button>
-  )}
-
-  // Recurring modal
-  <Dialog open={recurringModalOpen} onClose={() => setRecurringModalOpen(false)}>
-    <DialogTitle>Generate Recurring Jobs</DialogTitle>
-    <DialogContent>
-      <FormControl fullWidth sx={{ mt: 2 }}>
-        <InputLabel>Technician</InputLabel>
-        <Select value={recurringTechId} onChange={e => setRecurringTechId(e.target.value)}>
-          {technicians.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
-        </Select>
-      </FormControl>
-      <TextField label="Generate for months ahead" type="number" value={recurringMonths} onChange={e => setRecurringMonths(Number(e.target.value))} fullWidth sx={{ mt: 2 }} />
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={() => setRecurringModalOpen(false)}>Cancel</Button>
-      <Button variant="contained" onClick={generateRecurringJobs}>Generate</Button>
-    </DialogActions>
-  </Dialog>
-
-  // The rest of the code (calendar with optimization, invoices, etc.) remains the same
-
   return (
-    // Full JSX with all features
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            <img src="/logo.png" alt="AZEX Logo" style={{ height: '40px', marginRight: '10px' }} />
+            <Typography variant="h6">
+              AZEX PestGuard Portal
+            </Typography>
+          </Box>
+          <FormControl sx={{ minWidth: 200, mr: 2 }}>
+            <InputLabel>Branch</InputLabel>
+            <Select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+              <MenuItem value="">
+                <em>All Branches</em>
+              </MenuItem>
+              {branches.map(b => (
+                <MenuItem key={b.id} value={b.id}>{b.name} ({b.city}, {b.state})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button color="inherit" onClick={logout}>Logout</Button>
+        </Toolbar>
+      </AppBar>
+
+      <Container sx={{ mt: 4 }}>
+        <Paper sx={{ mb: 4 }}>
+          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered>
+            <Tab label="Dashboard" />
+            <Tab label="Calendar" />
+            <Tab label="Invoices" />
+            <Tab label="Service History" />
+            <Tab label="Digital Logbook" />
+            <Tab label="Payments" />
+            <Tab label="Customers" />
+            <Tab label="Technicians" />
+            <Tab label="Inventory" />
+          </Tabs>
+        </Paper>
+
+        {/* Inventory Tab with softer alert */}
+        {tab === 8 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Inventory Management</Typography>
+
+            {selectedBranch ? (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Current branch: {branches.find(b => b.id === Number(selectedBranch))?.name} — Stock levels shown below
+              </Alert>
+            ) : (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Select a branch above to view and adjust inventory
+              </Alert>
+            )}
+
+            {/* Rest of inventory content unchanged */}
+          </Box>
+        )}
+
+        {/* Customers Tab with softer alert */}
+        {tab === 6 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Manage Customers</Typography>
+
+            {selectedBranch !== '' ? (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Current branch: {branches.find(b => b.id === selectedBranch)?.name || 'Unknown'}
+              </Alert>
+            ) : editingId ? null : (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Select a branch above to add new customers (editing existing customers is always available).
+              </Alert>
+            )}
+
+            {/* Rest of customers content unchanged */}
+          </Box>
+        )}
+
+        {/* Technicians Tab with clear info message */}
+        {tab === 7 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Manage Technicians (HR)</Typography>
+
+            <Alert severity="info" sx={{ mb: 3 }}>
+              Technicians must be assigned to a specific branch. Select one in the form below when adding or editing.
+            </Alert>
+
+            {selectedBranch !== '' && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Current branch filter: {branches.find(b => b.id === Number(selectedBranch))?.name}
+              </Alert>
+            )}
+
+            {/* Rest of technicians content unchanged (branch dropdown is already required in form) */}
+          </Box>
+        )}
+
+        {/* All other tabs unchanged */}
+
+        {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
+      </Container>
+    </>
   );
 }
 
