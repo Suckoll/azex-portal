@@ -187,7 +187,6 @@ function Dashboard() {
             <Tab label="Bug Reporting" />
             <Tab label="Payments" />
             <Tab label="Customers" />
-            <Tab label="Employees" />
           </Tabs>
         </Paper>
 
@@ -305,7 +304,6 @@ function Dashboard() {
         {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 7 && <Box><Typography variant="h5">Employees</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
   );
