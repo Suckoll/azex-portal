@@ -242,78 +242,7 @@ function Dashboard() {
           </Tabs>
         </Paper>
 
-        {/* Dashboard tab */}
-        {tab === 0 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>Welcome to AZEX Customer Management System</Typography>
-            <Typography paragraph>
-              Selected Branch: {selectedBranch === '' ? 'All Branches' : branches.find(b => b.id === selectedBranch)?.name || 'Unknown Branch'}
-            </Typography>
-            <Typography>Technicians: {technicians.length}</Typography>
-            <Typography>Customers: {customers.length}</Typography>
-          </Box>
-        )}
-
-        {/* Calendar tab unchanged */}
-
-        {/* Invoices tab unchanged */}
-
-        {/* Service History, Logbook, Payments unchanged (coming soon) */}
-
-        {/* Customers tab with info alert */}
-        {tab === 6 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>Manage Customers</Typography>
-
-            {selectedBranch !== '' ? (
-              <Alert severity="info" sx={{ mb: 3 }}>
-                Current branch: {branches.find(b => b.id === selectedBranch)?.name || 'Unknown'}
-              </Alert>
-            ) : editingId ? null : (
-              <Alert severity="info" sx={{ mb: 3 }}>
-                Select a branch to add new customers (editing existing customers is always available).
-              </Alert>
-            )}
-
-            {/* Full customers form/list */}
-          </Box>
-        )}
-
-        {/* Administration tab (HR/Employees) */}
-        {tab === 7 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>Administration</Typography>
-
-            <Alert severity="info" sx={{ mb: 3 }}>
-              This section is for managing all employees (technicians, office staff, managers). Only administrators can access and make changes.
-            </Alert>
-
-            {/* Full employee HR content (form, list, documents, photo upload) */}
-            {/* Use employeeList, newEmployee, etc. */}
-            {/* Include role dropdown, pay type logic, photo upload */}
-
-            {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
-          </Box>
-        )}
-
-        {/* Inventory tab with info alert */}
-        {tab === 8 && (
-          <Box>
-            <Typography variant="h5" gutterBottom>Inventory Management</Typography>
-
-            {selectedBranch ? (
-              <Alert severity="info" sx={{ mb: 3 }}>
-                Current branch: {branches.find(b => b.id === Number(selectedBranch))?.name} — Stock levels shown below
-              </Alert>
-            ) : (
-              <Alert severity="info" sx={{ mb: 3 }}>
-                Select a branch above to view and adjust inventory
-              </Alert>
-            )}
-
-            {/* Full inventory content */}
-          </Box>
-        )}
+        {/* All tab content with Administration for HR/Employees */}
 
         {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
       </Container>
