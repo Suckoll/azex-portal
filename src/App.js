@@ -69,7 +69,7 @@ function Dashboard() {
             setSelectedBranch(res.data[0].id);
           }
         })
-        .catch(err => setMessage('Failed to load branches'));
+        .catch(err => setMessage('Failed to load data - check backend'));
     }
   }, [token]);
 
@@ -95,9 +95,9 @@ function Dashboard() {
       <Container sx={{ mt: 4 }}>
         <Typography variant="h5" gutterBottom>Welcome to AZEX Customer Management System</Typography>
         <Typography paragraph>
-          Selected Branch: {selectedBranch === '' ? 'Loading...' : branches.find(b => b.id === selectedBranch)?.name || 'None'}
+          Selected Branch: {branches.find(b => b.id === selectedBranch)?.name || 'Loading...'}
         </Typography>
-        {message && <Alert severity="error">{message}</Alert>}
+        {message && <Alert severity="info">{message}</Alert>}
       </Container>
     </>
   );
