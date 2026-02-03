@@ -184,7 +184,7 @@ function Dashboard() {
             <Tab label="Calendar" />
             <Tab label="Invoices" />
             <Tab label="Service History" />
-            <Tab label="Bug Reporting" />
+            <Tab label="Digital Logbook" />
             <Tab label="Payments" />
             <Tab label="Customers" />
           </Tabs>
@@ -202,7 +202,7 @@ function Dashboard() {
         )}
 
         {tab === 1 && (
-          <Box sx={{ height: '700px' }}>
+          <Box sx={{ height: '600px' }}>
             <Calendar
               localizer={localizer}
               events={events}
@@ -297,10 +297,12 @@ function Dashboard() {
           </Box>
         )}
 
-        {/* Placeholder for other tabs */}
+        {/* Other tabs placeholder */}
+        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
+        {tab === 1 && <Box><Typography variant="h5">Calendar</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
+        {tab === 4 && <Box><Typography variant="h5">Digital Logbook</Typography><Typography>Coming soon</Typography></Box>}
         {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
       </Container>
     </>
