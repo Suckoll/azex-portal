@@ -58,44 +58,99 @@ function Login() {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState(1); // Start on Calendar
-  const [technicians, setTechnicians] = useState([]);
-  const [selectedTech, setSelectedTech] = useState('');
-  const [events, setEvents] = useState([]);
+  const [tab, setTab] = useState(0);
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [newCustomer, setNewCustomer] = useState({
+    firstName: '',
+    lastName: '',
+    phone1: '',
+    email: '',
+    company: '',
+    address: '',
+    city: '',
+    state: 'AZ',
+    zip: '',
+    billName: '',
+    billEmail: '',
+    billPhone: '',
+    billAddress: '',
+    billCity: '',
+    billState: 'AZ',
+    billZip: '',
+    multiUnit: false
+  });
+  const [message, setMessage] = useState('');
 
   const token = localStorage.getItem('jwt_token');
 
   useEffect(() => {
     if (token) {
-      axios.get(`${API_BASE}/technicians`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setTechnicians(res.data))
+      axios.get(`${API_BASE}/branches`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setBranches(res.data))
         .catch(err => console.error(err));
     }
   }, [token]);
 
   useEffect(() => {
-    if (selectedTech && token) {
-      axios.get(`${API_BASE}/jobs/${selectedTech}`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => {
-          const formatted = res.data.map(job => ({
-            id: job.id,
-            title: job.title,
-            start: new Date(job.start),
-            end: new Date(job.end),
-            description: job.description
-          }));
-          setEvents(formatted);
-        })
+    if (token) {
+      const url = selectedBranch ? `${API_BASE}/customers?branch_id=${selectedBranch}` : `${API_BASE}/customers`;
+      axios.get(url, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setCustomers(res.data))
         .catch(err => console.error(err));
-    } else {
-      setEvents([]);
     }
-  }, [selectedTech, token]);
+  }, [token, selectedBranch]);
+
+  const handleAddCustomer = async () => {
+    try {
+      await axios.post(`${API_BASE}/customers`, newCustomer, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Customer added successfully!');
+      setNewCustomer({
+        firstName: '',
+        lastName: '',
+        phone1: '',
+        email: '',
+        company: '',
+        address: '',
+        city: '',
+        state: 'AZ',
+        zip: '',
+        billName: '',
+        billEmail: '',
+        billPhone: '',
+        billAddress: '',
+        billCity: '',
+        billState: 'AZ',
+        billZip: '',
+        multiUnit: false
+      });
+      const res = await axios.get(`${API_BASE}/customers`, { headers: { Authorization: `Bearer ${token}` } });
+      setCustomers(res.data);
+    } catch (err) {
+      setMessage(err.response?.data?.error || 'Failed to add customer');
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
     window.location.href = '/';
   };
+
+  const events = [
+    {
+      title: 'Monthly Service - Sunset Apartments',
+      start: new Date(2025, 11, 22, 9, 0),
+      end: new Date(2025, 11, 22, 12, 0),
+    },
+    {
+      title: 'Emergency Call - Rob Suckoll',
+      start: new Date(2025, 11, 23, 14, 0),
+      end: new Date(2025, 11, 23, 16, 0),
+    },
+  ];
 
   return (
     <>
@@ -107,6 +162,17 @@ function Dashboard() {
               AZEX PestGuard Portal
             </Typography>
           </Box>
+          <FormControl sx={{ minWidth: 200, mr: 2 }}>
+            <InputLabel>Branch</InputLabel>
+            <Select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
+              <MenuItem value="">
+                <em>All Branches</em>
+              </MenuItem>
+              {branches.map(b => (
+                <MenuItem key={b.id} value={b.id}>{b.name} ({b.city}, {b.state})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Button color="inherit" onClick={logout}>Logout</Button>
         </Toolbar>
       </AppBar>
@@ -121,62 +187,42 @@ function Dashboard() {
             <Tab label="Bug Reporting" />
             <Tab label="Payments" />
             <Tab label="Customers" />
-            <Tab label="Employees" />
           </Tabs>
         </Paper>
 
-        {tab === 1 && (
+        {tab === 0 && (
           <Box>
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Select Technician</InputLabel>
-              <Select value={selectedTech} onChange={(e) => setSelectedTech(e.target.value)}>
-                <MenuItem value="">
-                  <em>All Technicians</em>
-                </MenuItem>
-                {technicians.map(tech => (
-                  <MenuItem key={tech.id} value={tech.id}>{tech.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Box sx={{ height: '600px' }}>
-              <Calendar
-                localizer={localizer}
-                events={events}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: '100%' }}
-              />
-            </Box>
+            <Typography variant="h5" gutterBottom>
+              Welcome to Your AZEX Portal
+            </Typography>
+            <Typography paragraph>
+              Selected branch: {branches.find(b => b.id === selectedBranch)?.name || 'All Branches'}
+            </Typography>
           </Box>
         )}
 
-        {/* Other tabs placeholder */}
-        {tab === 0 && <Box><Typography variant="h5">Dashboard</Typography><Typography>Welcome!</Typography></Box>}
-        {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 4 && <Box><Typography variant="h5">Bug Reporting</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 6 && <Box><Typography variant="h5">Customers</Typography><Typography>Coming soon</Typography></Box>}
-        {tab === 7 && <Box><Typography variant="h5">Employees</Typography><Typography>Coming soon</Typography></Box>}
-      </Container>
-    </>
-  );
-}
+        {tab === 1 && (
+          <Box sx={{ height: '600px' }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+            />
+          </Box>
+        )}
 
-function App() {
-  const token = localStorage.getItem('jwt_token');
+        {tab === 6 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Manage Customers
+            </Typography>
 
-  return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-          <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
-  );
-}
-
-export default App;
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6">Basic Information</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                <TextField label="First Name" value={newCustomer.firstName} onChange={(e) => setNewCustomer({...newCustomer, firstName: e.target.value})} />
+                <TextField label="Last Name" value={newCustomer.lastName} onChange={(e) => setNewCustomer({...newCustomer, lastName: e.target.value})} />
+                <TextField label="Phone" value={newCustomer.phone1} onChange={(e) => setNewCustomer({...newCustomer, phone1: e.target.value})} />
+                <TextField label
