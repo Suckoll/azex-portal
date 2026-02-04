@@ -71,7 +71,7 @@ function Dashboard() {
         })
         .catch(() => setMessage('Failed to load branches'));
     }
-  }, [token, headers, selectedBranch]);
+  }, [token, headers, selectedBranch]);  // Fixed dependencies for ESLint
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
