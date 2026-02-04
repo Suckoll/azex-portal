@@ -71,7 +71,7 @@ function Dashboard() {
         })
         .catch(() => setMessage('Failed to load branches'));
     }
-  }, [token]);
+  }, [token, headers, selectedBranch]);
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
