@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
@@ -58,7 +58,7 @@ function Dashboard() {
   const [message, setMessage] = useState('');
 
   const token = localStorage.getItem('jwt_token');
-  const headers = { headers: { Authorization: `Bearer ${token}` } };
+  const headers = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);  // FIXED: useMemo for stable headers
 
   useEffect(() => {
     if (token) {
@@ -71,7 +71,7 @@ function Dashboard() {
         })
         .catch(() => setMessage('Failed to load branches'));
     }
-  }, [token, headers, selectedBranch]);  // Fixed dependencies for ESLint
+  }, [token, headers, selectedBranch]);  // FIXED: added headers
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
