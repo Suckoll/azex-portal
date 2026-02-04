@@ -27,6 +27,7 @@ import { Icon } from 'leaflet';
 import polyline from '@mapbox/polyline';
 import 'leaflet/dist/leaflet.css';
 
+// Leaflet fix
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -195,7 +196,7 @@ function Dashboard() {
   // Inventory, Invoice states unchanged
 
   const token = localStorage.getItem('jwt_token');
-  const headers = { headers: { Authorization: `Bearer ${token}` } };
+  const headers = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
   useEffect(() => {
     if (token) {
@@ -208,9 +209,9 @@ function Dashboard() {
         })
         .catch(err => setMessage('Failed to load branches'));
     }
-  }, [token]);
+  }, [token, headers, selectedBranch]);  # FIXED dependencies
 
-  // Other useEffects unchanged (for technicians, products, customers, etc.)
+  // All other useEffects unchanged
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
