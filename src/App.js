@@ -7,34 +7,8 @@ import {
   FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, IconButton,
   useMediaQuery, useTheme
 } from '@mui/material';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
 import axios from 'axios';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import EmailIcon from '@mui/icons-material/Email';
-import MapIcon from '@mui/icons-material/Map';
-import OptimizeIcon from '@mui/icons-material/Tune';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import polyline from '@mapbox/polyline';
-import 'leaflet/dist/leaflet.css';
 
-delete Icon.Default.prototype._getIconUrl;
-Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-const localizer = momentLocalizer(moment);
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
 
@@ -87,22 +61,7 @@ function Dashboard() {
   const [tab, setTab] = useState(0);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState('');
-  const [technicians, setTechnicians] = useState([]);
-  const [selectedTech, setSelectedTech] = useState(null);
-  const [events, setEvents] = useState([]);
-  const [currentDate, setCurrentDate] = useState(moment());
-  const [customers, setCustomers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [products, setProducts] = useState([]);
-  const [stock, setStock] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [payments, setPayments] = useState([]);
   const [message, setMessage] = useState('');
-  const [mapPoints, setMapPoints] = useState([]);
-  const [routePolyline, setRoutePolyline] = useState([]);
-  const [routeInfo, setRouteInfo] = useState({ distance: 0, duration: 0 });
-  const invoiceRef = useRef(null);
 
   const token = localStorage.getItem('jwt_token');
   const headers = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
@@ -113,12 +72,12 @@ function Dashboard() {
         .then(res => {
           setBranches(res.data);
           if (res.data.length > 0 && selectedBranch === '') {
-            setSelectedBranch(res.data[0].id);   // Copilot fix - moved here
+            setSelectedBranch(res.data[0].id);
           }
         })
         .catch(() => setMessage('Failed to load branches'));
     }
-  }, [token, headers]);  // Copilot fix - removed selectedBranch from dependencies
+  }, [token, headers, selectedBranch]);
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -163,9 +122,145 @@ function Dashboard() {
           </Box>
         )}
 
+        {/* Digital Logbook Tab */}
+        {tab === 4 && <DigitalLogbook />}
+
         {message && <Alert severity="info" sx={{ mt: 3 }}>{message}</Alert>}
       </Container>
     </>
+  );
+}
+
+// Digital Logbook Component (from your HTML converted to React)
+function DigitalLogbook() {
+  const [unit, setUnit] = useState('');
+  const [pest, setPest] = useState('');
+  const [area, setArea] = useState('');
+  const [description, setDescription] = useState('');
+  const [reporter, setReporter] = useState('');
+  const [permission, setPermission] = useState('');
+  const [occupied, setOccupied] = useState('');
+  const [photo, setPhoto] = useState(null);
+  const [message, setMessage] = useState('');
+  const [logbookEntries, setLogbookEntries] = useState([]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('unit', unit);
+    formData.append('pest', pest);
+    formData.append('area', area);
+    formData.append('description', description);
+    formData.append('reporter', reporter);
+    formData.append('permission', permission);
+    formData.append('occupied', occupied);
+    if (photo) formData.append('photo', photo);
+
+    try {
+      const res = await axios.post(`${API_BASE}/logbook`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setMessage('Report submitted successfully!');
+      setLogbookEntries([res.data, ...logbookEntries]);
+      // Reset form
+      setUnit(''); setPest(''); setArea(''); setDescription(''); setReporter(''); setPermission(''); setOccupied(''); setPhoto(null);
+    } catch (err) {
+      setMessage('Submission failed. Please try again.');
+    }
+  };
+
+  return (
+    <Container maxWidth="md">
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h4" align="center" gutterBottom>Digital Logbook</Typography>
+        <Typography variant="body1" align="center" sx={{ mb: 4 }}>
+          Submit pest sightings, photos, and notes. This helps us schedule the right technician for your next service.
+        </Typography>
+
+        <Paper sx={{ p: 4, mb: 4 }}>
+          <form onSubmit={handleSubmit}>
+            <TextField label="Room/Unit Number *" fullWidth value={unit} onChange={(e) => setUnit(e.target.value)} required sx={{ mb: 2 }} />
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Pest Type *</InputLabel>
+              <Select value={pest} onChange={(e) => setPest(e.target.value)} required>
+                <MenuItem value="Cockroach">Cockroach</MenuItem>
+                <MenuItem value="Scorpion">Scorpion</MenuItem>
+                <MenuItem value="Ant">Ant</MenuItem>
+                <MenuItem value="Spider">Spider</MenuItem>
+                <MenuItem value="Rodent">Rodent</MenuItem>
+                <MenuItem value="Bed Bug">Bed Bug</MenuItem>
+                <MenuItem value="Termite">Termite</MenuItem>
+                <MenuItem value="Other">Other</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Room/Area *</InputLabel>
+              <Select value={area} onChange={(e) => setArea(e.target.value)} required>
+                <MenuItem value="Kitchen">Kitchen</MenuItem>
+                <MenuItem value="Bedroom">Bedroom</MenuItem>
+                <MenuItem value="Bathroom">Bathroom</MenuItem>
+                <MenuItem value="Living Room">Living Room</MenuItem>
+                <MenuItem value="Hallway">Hallway</MenuItem>
+                <MenuItem value="Garage">Garage</MenuItem>
+                <MenuItem value="Exterior">Exterior</MenuItem>
+                <MenuItem value="Other">Other</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField label="Description" multiline rows={4} fullWidth value={description} onChange={(e) => setDescription(e.target.value)} sx={{ mb: 2 }} />
+            <TextField label="Upload Photo (optional)" type="file" fullWidth onChange={(e) => setPhoto(e.target.files[0])} sx={{ mb: 2 }} />
+            <TextField label="Reporter Name *" fullWidth value={reporter} onChange={(e) => setReporter(e.target.value)} required sx={{ mb: 2 }} />
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Permission to Enter? *</InputLabel>
+              <Select value={permission} onChange={(e) => setPermission(e.target.value)} required>
+                <MenuItem value="Yes">Yes - enter anytime</MenuItem>
+                <MenuItem value="No">No - resident must be present</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Unit Status *</InputLabel>
+              <Select value={occupied} onChange={(e) => setOccupied(e.target.value)} required>
+                <MenuItem value="Occupied">Occupied</MenuItem>
+                <MenuItem value="Vacant">Vacant</MenuItem>
+              </Select>
+            </FormControl>
+            <Button type="submit" variant="contained" fullWidth size="large">
+              Submit Report
+            </Button>
+          </form>
+          {message && <Alert severity="success" sx={{ mt: 3 }}>{message}</Alert>}
+        </Paper>
+
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h6" gutterBottom>Recent Logbook Entries</Typography>
+          {logbookEntries.length === 0 ? (
+            <Typography color="textSecondary">No recent entries yet.</Typography>
+          ) : (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Unit</TableCell>
+                  <TableCell>Pest</TableCell>
+                  <TableCell>Area</TableCell>
+                  <TableCell>Reporter</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {logbookEntries.map((entry, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{moment(entry.date || entry.createdAt).format('MM/DD/YYYY hh:mm A')}</TableCell>
+                    <TableCell>{entry.unit}</TableCell>
+                    <TableCell>{entry.pest}</TableCell>
+                    <TableCell>{entry.area}</TableCell>
+                    <TableCell>{entry.reporter}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Paper>
+      </Box>
+    </Container>
   );
 }
 
