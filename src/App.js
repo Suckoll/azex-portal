@@ -114,6 +114,7 @@ function Dashboard() {
           </Tabs>
         </Paper>
 
+        {/* Dashboard */}
         {tab === 0 && (
           <Box>
             <Typography variant="h5" gutterBottom>Welcome to AZEX Customer Management System</Typography>
@@ -123,7 +124,64 @@ function Dashboard() {
           </Box>
         )}
 
+        {/* Calendar */}
+        {tab === 1 && (
+          <Box>
+            <Typography variant="h5">Calendar</Typography>
+            <Typography>Calendar feature coming soon...</Typography>
+          </Box>
+        )}
+
+        {/* Invoices */}
+        {tab === 2 && (
+          <Box>
+            <Typography variant="h5">Invoices</Typography>
+            <Typography>Invoices feature coming soon...</Typography>
+          </Box>
+        )}
+
+        {/* Service History */}
+        {tab === 3 && (
+          <Box>
+            <Typography variant="h5">Service History</Typography>
+            <Typography>Service History feature coming soon...</Typography>
+          </Box>
+        )}
+
+        {/* Digital Logbook - Your full component */}
         {tab === 4 && <DigitalLogbook />}
+
+        {/* Payments */}
+        {tab === 5 && (
+          <Box>
+            <Typography variant="h5">Payments</Typography>
+            <Typography>Payments feature coming soon...</Typography>
+          </Box>
+        )}
+
+        {/* Customers */}
+        {tab === 6 && (
+          <Box>
+            <Typography variant="h5">Customers</Typography>
+            <Typography>Customers feature coming soon...</Typography>
+          </Box>
+        )}
+
+        {/* Administration */}
+        {tab === 7 && (
+          <Box>
+            <Typography variant="h5">Administration</Typography>
+            <Typography>Administration feature coming soon...</Typography>
+          </Box>
+        )}
+
+        {/* Inventory */}
+        {tab === 8 && (
+          <Box>
+            <Typography variant="h5">Inventory</Typography>
+            <Typography>Inventory feature coming soon...</Typography>
+          </Box>
+        )}
 
         {message && <Alert severity="info" sx={{ mt: 3 }}>{message}</Alert>}
       </Container>
@@ -131,7 +189,7 @@ function Dashboard() {
   );
 }
 
-// Digital Logbook Component (your HTML converted to React)
+// Digital Logbook Component (your exact HTML converted to React)
 function DigitalLogbook() {
   const [unit, setUnit] = useState('');
   const [pest, setPest] = useState('');
