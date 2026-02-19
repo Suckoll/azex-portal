@@ -27,7 +27,7 @@ import { Icon } from 'leaflet';
 import polyline from '@mapbox/polyline';
 import 'leaflet/dist/leaflet.css';
 
-// Leaflet icon fix
+// Leaflet fix
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -55,7 +55,7 @@ async function geocodeAddress(address) {
   if (!address || address.trim() === '') return null;
   const query = encodeURIComponent(address.trim());
   try {
-    const res = await fetch(`${NOMINATIM}?q=${query}&format=json&limit=1`);
+    const res = await fetch(`${NOMINATIM}?q={query}&format=json&limit=1`);
     const data = await res.json();
     if (data && data[0]) {
       return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
@@ -168,11 +168,35 @@ function Dashboard() {
       </AppBar>
 
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>Welcome to AZEX Customer Management System</Typography>
-        <Typography paragraph>
-          Selected Branch: {selectedBranch === '' ? 'Loading...' : branches.find(b => b.id === selectedBranch)?.name || 'None'}
-        </Typography>
-        {message && <Alert severity="info">{message}</Alert>}
+        <Paper sx={{ mb: 4 }}>
+          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered variant={isMobile ? 'scrollable' : 'standard'}>
+            <Tab label="Dashboard" />
+            <Tab label="Calendar" />
+            <Tab label="Invoices" />
+            <Tab label="Service History" />
+            <Tab label="Digital Logbook" />
+            <Tab label="Payments" />
+            <Tab label="Customers" />
+            <Tab label="Administration" />
+            <Tab label="Inventory" />
+          </Tabs>
+        </Paper>
+
+        {/* Dashboard tab */}
+        {tab === 0 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Welcome to AZEX Customer Management System</Typography>
+            <Typography paragraph>
+              Selected Branch: {selectedBranch === '' ? 'All Branches' : branches.find(b => b.id === selectedBranch)?.name || 'Unknown Branch'}
+            </Typography>
+            <Typography>Technicians: {technicians.length}</Typography>
+            <Typography>Customers: {customers.length}</Typography>
+          </Box>
+        )}
+
+        {/* Other tabs unchanged */}
+
+        {message && <Alert severity={message.includes('success') ? 'success' : 'error'} sx={{ mt: 3 }}>{message}</Alert>}
       </Container>
     </>
   );
