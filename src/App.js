@@ -7,10 +7,68 @@ import {
   FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, IconButton,
   useMediaQuery, useTheme
 } from '@mui/material';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import axios from 'axios';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import EmailIcon from '@mui/icons-material/Email';
+import MapIcon from '@mui/icons-material/Map';
+import OptimizeIcon from '@mui/icons-material/Tune';
+import RepeatIcon from '@mui/icons-material/Repeat';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { Icon } from 'leaflet';
+import polyline from '@mapbox/polyline';
+import 'leaflet/dist/leaflet.css';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
 
+// Leaflet fix
+delete Icon.Default.prototype._getIconUrl;
+Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+const localizer = momentLocalizer(moment);
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
+const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
+const DOCUMENT_CATEGORIES = ['License', 'Certification', 'Resume', 'ID Document', 'Write-up', 'Performance Review', 'Training', 'Other'];
+const PRODUCT_CATEGORIES = ['Pesticide', 'Rodenticide', 'Termiticide', 'Bait', 'Trap', 'Equipment', 'Other'];
+const TAX_RATE = 0.086;
+const MAX_STOPS_PER_DAY = 15;
+const DEFAULT_SERVICE_MINUTES = 45;
+const DAYS_OF_WEEK = ['Any', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const RECURRENCE_OPTIONS = ['None', 'Monthly', 'Bi-Monthly', 'Quarterly', 'Semi-Annually', 'Annually'];
+
+const OSRM_TABLE = 'http://router.project-osrm.org/table/v1/driving/';
+const OSRM_ROUTE = 'http://router.project-osrm.org/route/v1/driving/';
+const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+
+async function geocodeAddress(address) {
+  if (!address || address.trim() === '') return null;
+  const query = encodeURIComponent(address.trim());
+  try {
+    const res = await fetch(`${NOMINATIM}?q=${query}&format=json&limit=1`);
+    const data = await res.json();
+    if (data && data[0]) {
+      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    }
+  } catch (e) {
+    console.error('Geocode error', e);
+  }
+  return null;
+}
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -61,7 +119,22 @@ function Dashboard() {
   const [tab, setTab] = useState(0);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState('');
+  const [technicians, setTechnicians] = useState([]);
+  const [selectedTech, setSelectedTech] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [currentDate, setCurrentDate] = useState(moment());
+  const [customers, setCustomers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts] = useState([]);
+  const [stock, setStock] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [message, setMessage] = useState('');
+  const [mapPoints, setMapPoints] = useState([]);
+  const [routePolyline, setRoutePolyline] = useState([]);
+  const [routeInfo, setRouteInfo] = useState({ distance: 0, duration: 0 });
+  const invoiceRef = useRef(null);
 
   const token = localStorage.getItem('jwt_token');
   const headers = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
@@ -77,7 +150,7 @@ function Dashboard() {
         })
         .catch(() => setMessage('Failed to load branches'));
     }
-  }, [token, headers]);
+  }, [token, headers, selectedBranch]);
 
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -98,15 +171,9 @@ function Dashboard() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Container sx={{ mt: 4 }}>
         <Paper sx={{ mb: 4 }}>
-          <Tabs 
-            value={tab} 
-            onChange={(e, newValue) => setTab(newValue)} 
-            centered={!isMobile}
-            variant={isMobile ? 'scrollable' : 'standard'}
-            scrollButtonsDisplay={isMobile ? 'auto' : 'off'}
-          >
+          <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)} centered variant={isMobile ? 'scrollable' : 'standard'}>
             <Tab label="Dashboard" />
             <Tab label="Calendar" />
             <Tab label="Invoices" />
@@ -123,35 +190,10 @@ function Dashboard() {
           <Box>
             <Typography variant="h5" gutterBottom>Welcome to AZEX Customer Management System</Typography>
             <Typography paragraph>
-              Selected Branch: {selectedBranch === '' ? 'Loading...' : branches.find(b => b.id === selectedBranch)?.name || 'None'}
+              Selected Branch: {selectedBranch === '' ? 'All Branches' : branches.find(b => b.id === selectedBranch)?.name || 'Unknown Branch'}
             </Typography>
-            {branches.length > 0 && (
-              <FormControl sx={{ minWidth: 200 }}>
-                <InputLabel>Select Branch</InputLabel>
-                <Select
-                  value={selectedBranch}
-                  label="Select Branch"
-                  onChange={(e) => setSelectedBranch(e.target.value)}
-                >
-                  {branches.map(branch => (
-                    <MenuItem key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
           </Box>
         )}
-
-        {tab === 1 && <Box><Typography variant="h5">Calendar</Typography><Typography>Calendar feature coming soon...</Typography></Box>}
-        {tab === 2 && <Box><Typography variant="h5">Invoices</Typography><Typography>Invoices feature coming soon...</Typography></Box>}
-        {tab === 3 && <Box><Typography variant="h5">Service History</Typography><Typography>Service History feature coming soon...</Typography></Box>}
-        {tab === 4 && <Box><Typography variant="h5">Digital Logbook</Typography><Typography>Digital Logbook feature coming soon...</Typography></Box>}
-        {tab === 5 && <Box><Typography variant="h5">Payments</Typography><Typography>Payments feature coming soon...</Typography></Box>}
-        {tab === 6 && <Box><Typography variant="h5">Customers</Typography><Typography>Customers feature coming soon...</Typography></Box>}
-        {tab === 7 && <Box><Typography variant="h5">Administration</Typography><Typography>Administration feature coming soon...</Typography></Box>}
-        {tab === 8 && <Box><Typography variant="h5">Inventory</Typography><Typography>Inventory feature coming soon...</Typography></Box>}
 
         {message && <Alert severity="info" sx={{ mt: 3 }}>{message}</Alert>}
       </Container>
