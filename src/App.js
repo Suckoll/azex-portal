@@ -8,6 +8,7 @@ import {
   useMediaQuery, useTheme
 } from '@mui/material';
 import axios from 'axios';
+import moment from 'moment';
 
 const theme = createTheme({ palette: { primary: { main: '#1B5E20' } } });
 const API_BASE = 'https://azex-backend-v2.onrender.com/api';
@@ -122,7 +123,6 @@ function Dashboard() {
           </Box>
         )}
 
-        {/* Digital Logbook Tab */}
         {tab === 4 && <DigitalLogbook />}
 
         {message && <Alert severity="info" sx={{ mt: 3 }}>{message}</Alert>}
@@ -131,7 +131,7 @@ function Dashboard() {
   );
 }
 
-// Digital Logbook Component (from your HTML converted to React)
+// Digital Logbook Component (your HTML converted to React)
 function DigitalLogbook() {
   const [unit, setUnit] = useState('');
   const [pest, setPest] = useState('');
@@ -162,7 +162,6 @@ function DigitalLogbook() {
       });
       setMessage('Report submitted successfully!');
       setLogbookEntries([res.data, ...logbookEntries]);
-      // Reset form
       setUnit(''); setPest(''); setArea(''); setDescription(''); setReporter(''); setPermission(''); setOccupied(''); setPhoto(null);
     } catch (err) {
       setMessage('Submission failed. Please try again.');
